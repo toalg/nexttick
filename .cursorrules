@@ -1,0 +1,345 @@
+# NextTick - Ultimate Flutter Habit Tracking App Development Rules
+
+## Project Overview
+NextTick is a cross-platform Flutter habit tracking app with GitHub integration. Focus on creating a modern, accessible, and scalable MVP that follows Material Design 3 principles and production-quality code standards.
+
+## CRITICAL CODE QUALITY STANDARDS (ENFORCED)
+- Follow flutter_lints rules strictly - NO exceptions
+- Use const constructors everywhere possible
+- Prefer composition over inheritance
+- Apply SOLID principles to all classes
+- Use meaningful variable names (no abbreviations like 'btn', 'txt')
+- Add trailing commas for better formatting and Git diffs
+- Extract complex widgets into separate classes (max 50 lines per build method)
+- Use proper error handling with try-catch blocks
+- Implement proper dispose methods for all resources
+- Use keys for dynamic widget lists
+- Prefer named parameters for constructors with 2+ parameters
+
+## Architecture & Structure
+
+### Feature-First Architecture
+- Organize code by features, not by technical layers
+- Each feature should be self-contained with its own models, services, and UI
+- Use the following structure:
+  ```
+  lib/
+  ├── core/           # Shared utilities, constants, base classes, themes
+  │   ├── constants/  # App constants, colors, strings
+  │   ├── themes/     # Material Design 3 theme system
+  │   └── utils/      # Helper functions, extensions
+  ├── features/       # Feature modules
+  │   ├── habits/     # Habit management (models, providers, screens, widgets)
+  │   ├── tasks/      # Task management
+  │   ├── progress/   # Progress tracking & analytics
+  │   └── settings/   # App settings & preferences
+  ├── shared/         # Reusable widgets, services, models
+  │   ├── widgets/    # Common UI components
+  │   ├── services/   # Database, API services
+  │   └── database/   # Repository pattern, models
+  └── main.dart       # App entry point
+  ```
+
+### State Management Rules
+- Use Provider for state management (simple, effective for MVP)
+- Create separate providers for different features
+- Use Consumer/Selector for targeted rebuilds
+- Implement proper dispose methods
+- Use ChangeNotifier for mutable state
+- Use ValueNotifier for simple reactive values
+
+### Database Design (SQLite)
+- Use sqflite for local storage with repository pattern
+- Design normalized schema: habits, completions, tasks, user_stats
+- Implement proper error handling with Either<Failure, Success> pattern
+- Use migrations for schema changes
+- Cache expensive queries and operations
+
+## Flutter Performance Rules (MANDATORY)
+- Use const widgets whenever possible - if it can be const, make it const
+- Extract stateless widgets from build methods when logic exceeds 20 lines
+- Use RepaintBoundary for complex animations
+- Cache expensive computations using late variables or memoization
+- Use ListView.builder for any list with >10 items
+- Dispose controllers, timers, and streams properly in dispose()
+- Use ValueKey for list items with unique identifiers
+- Prefer SizedBox over Container for spacing
+- Use ColoredBox instead of Container when only setting color
+
+## Code Style Guidelines (ENFORCED)
+```dart
+// ✅ CORRECT Widget Pattern:
+class HabitCard extends StatelessWidget {
+  const HabitCard({
+    super.key,
+    required this.habit,
+    required this.onTap,
+    this.showStreak = true,
+  });
+
+  final Habit habit;
+  final VoidCallback onTap;
+  final bool showStreak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    // Implementation with const usage
+  }
+}
+```
+
+### Naming Conventions
+- **Files**: snake_case (habit_card.dart)
+- **Classes**: PascalCase (HabitCard)
+- **Variables**: camelCase (habitRepository)
+- **Constants**: SCREAMING_SNAKE_CASE (HABIT_CREATED)
+
+### Import Organization
+```dart
+// Order: dart, flutter, package, relative
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../core/constants/app_constants.dart';
+import 'habit_model.dart';
+```
+
+## Material Design 3 Guidelines
+
+### Color Scheme (Use These Exact Values)
+- Primary: #6366F1 (Modern Indigo)
+- Success: #10B981 (Emerald Green)
+- Warning: #F59E0B (Amber)
+- Error: #EF4444 (Red)
+- Background: #F8FAFC (Slate 50)
+- Surface: #FFFFFF (White)
+- Text Primary: #1E293B (Slate 800)
+- Text Secondary: #64748B (Slate 500)
+
+### Theme System
+- Implement comprehensive Material 3 theme with light/dark modes
+- Use semantic color tokens throughout the app
+- Support dynamic theming and accessibility
+- Implement proper elevation and shadows
+- Use 8dp grid system for consistent spacing
+
+### Components Best Practices
+- Use Material 3 components (Cards, FABs, Chips)
+- Implement proper touch targets (min 48dp)
+- Add smooth transitions and micro-animations
+- Use hero animations for screen transitions
+- Implement proper loading and error states
+
+## Habit Tracking Patterns
+
+### Data Models (Required Structure)
+```dart
+class Habit {
+  final String id;
+  final String title;
+  final String frequency; // daily, weekly
+  final DateTime createdAt;
+  final bool isActive;
+  
+  const Habit({
+    required this.id,
+    required this.title,
+    required this.frequency,
+    required this.createdAt,
+    this.isActive = true,
+  });
+}
+
+class Completion {
+  final String id;
+  final String habitId;
+  final DateTime completedAt;
+  
+  const Completion({
+    required this.id,
+    required this.habitId,
+    required this.completedAt,
+  });
+}
+```
+
+### Gamification Elements
+- XP System: 10 XP per habit completion, streak bonuses
+- Streak tracking with fire emoji visualization
+- Level progression (100 XP per level)
+- Achievement badges for milestones
+- Daily completion percentage tracking
+- Celebration animations (confetti, success states)
+
+### User Experience Patterns
+- Satisfying one-tap completion with immediate feedback
+- Visual progress indicators (circular progress, streak flames)
+- Clear today view showing daily habits and tasks
+- Simple habit creation with natural language hints
+- Motivational messaging without guilt or pressure
+
+## Error Handling Pattern (MANDATORY)
+```dart
+// Always use this pattern for async operations:
+try {
+  final result = await repository.saveHabit(habit);
+  return Right(result);
+} on DatabaseException catch (e) {
+  return Left(DatabaseFailure(e.message));
+} catch (e) {
+  return Left(UnknownFailure(e.toString()));
+}
+
+// UI Error Handling
+if (result.isLeft()) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(result.fold((l) => l.message, (r) => ''))),
+  );
+}
+```
+
+## GitHub Integration
+
+### Authentication Flow
+- Implement OAuth with GitHub using secure storage
+- Handle token refresh and expiration gracefully
+- Provide clear error messages for auth failures
+- Support logout and account switching
+
+### Data Sync Strategy
+- Sync habits to GitHub issues/repositories
+- Use GitHub API for backup and sharing
+- Implement offline-first with sync queue
+- Handle conflicts with user-friendly resolution
+
+## Testing Strategy
+
+### Required Test Coverage
+- Unit tests for all business logic (80% coverage minimum)
+- Widget tests for complex UI components
+- Integration tests for critical user flows
+- Repository tests with mocking
+
+### Test Structure Pattern
+```dart
+void main() {
+  group('HabitRepository', () {
+    late HabitRepository repository;
+    late MockDatabase mockDatabase;
+
+    setUp(() {
+      mockDatabase = MockDatabase();
+      repository = HabitRepository(database: mockDatabase);
+    });
+
+    test('should save habit successfully', () async {
+      // Arrange, Act, Assert pattern
+    });
+  });
+}
+```
+
+## Performance & Optimization
+
+### App Performance Rules
+- Implement proper loading states for all async operations
+- Use lazy loading for large datasets
+- Optimize animations for 60 FPS target
+- Minimize app startup time (<2 seconds)
+- Profile memory usage and prevent leaks
+
+### Database Optimization
+- Use proper indexing for frequently queried fields
+- Implement pagination for large datasets
+- Use transactions for complex operations
+- Regular cleanup of old completion data
+
+## Accessibility Requirements
+- Add semantic labels to all interactive widgets: `Semantics(label: 'Complete habit', child: ...)`
+- Ensure minimum 44px touch targets
+- Provide alternative text for images and icons
+- Use proper heading hierarchy with semantic markup
+- Test with screen readers (TalkBack/VoiceOver)
+- Support high contrast and large text modes
+
+## Dependencies & Packages (Current Stack)
+```yaml
+dependencies:
+  provider: ^6.1.1          # State management
+  sqflite: ^2.3.0          # Local database
+  fl_chart: ^0.64.0        # Charts and visualizations
+  lottie: ^2.7.0           # Animations
+  shared_preferences: ^2.2.2 # Settings storage
+  intl: ^0.18.1            # Date formatting
+  uuid: ^4.1.0             # ID generation
+
+dev_dependencies:
+  flutter_lints: ^3.0.0   # Linting rules
+  mocktail: ^1.0.0         # Testing mocks
+```
+
+## Commit Conventions
+```
+feat(habits): add habit creation with validation
+fix(database): resolve SQLite connection timeout
+style(ui): update Material Design 3 colors
+docs(readme): add development setup guide
+test(habits): add unit tests for habit repository
+refactor(providers): extract common state logic
+```
+
+## Security & Privacy
+- Validate all user inputs before database operations
+- Use secure storage for sensitive data (GitHub tokens)
+- Implement proper data export/deletion (user privacy)
+- Handle API rate limiting gracefully
+- Use HTTPS for all network requests
+
+## MVP Constraints & Priorities
+- 2-week development timeline with 3 core screens
+- Focus on essential habit tracking loop: create → complete → celebrate
+- Local-first storage (no cloud sync in MVP)
+- Basic gamification with XP and streaks
+- Material Design 3 with accessibility compliance
+- Cross-platform support (web priority, then mobile/desktop)
+
+## Animation Guidelines
+- Use Duration constants: fast (150ms), medium (300ms), slow (500ms)
+- Prefer implicit animations (AnimatedContainer) over explicit
+- Use Curves.easeInOut for most transitions
+- Add celebration animations for habit completion
+- Implement hero animations between screens
+- Respect reduced motion accessibility settings
+
+## When Writing Code:
+1. Always check if widgets can be const before creating them
+2. Extract large build methods into smaller private methods
+3. Use meaningful names that explain purpose, not implementation
+4. Add proper error handling for all async operations
+5. Include loading and error states in UI
+6. Write self-documenting code with clear variable names
+7. Use early returns to reduce nesting
+8. Prefer composition over inheritance
+9. Cache network requests and expensive operations
+10. Always dispose of resources in dispose() methods
+
+## Quality Gates (Before Any Commit)
+- All code passes `flutter analyze` without warnings
+- All tests pass with `flutter test`
+- Code coverage maintains 80% minimum
+- App builds and runs successfully on target platforms
+- No performance regressions in critical paths
+- Accessibility requirements verified
+
+Remember: This is production-quality code for a commercial app. Every line should be clean, performant, and maintainable. Focus on user value while maintaining enterprise-grade code quality.
