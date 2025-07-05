@@ -13,7 +13,7 @@ class CalendarViewSelector extends StatelessWidget {
   final ValueChanged<CalendarView> onViewChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
@@ -49,10 +49,10 @@ class CalendarViewSelector extends StatelessWidget {
   }
 
   Widget _buildViewButton(
-    BuildContext context,
-    String label,
-    CalendarView view,
-    IconData icon,
+    final BuildContext context,
+    final String label,
+    final CalendarView view,
+    final IconData icon,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final isSelected = currentView == view;

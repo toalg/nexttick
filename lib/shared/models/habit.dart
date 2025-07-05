@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Habit recurrence enumeration
@@ -32,16 +31,16 @@ class Habit {
 
   /// Create a new habit with generated ID
   factory Habit.create({
-    required String title,
-    required String description,
-    required HabitRecurrence recurrence,
-    DateTime? endDate,
-    List<DateTime> customSchedule = const [],
-    String? color,
-    String? icon,
-    TimeOfDay? preferredTime,
-    int targetCount = 1,
-    String? category,
+    required final String title,
+    required final String description,
+    required final HabitRecurrence recurrence,
+    final DateTime? endDate,
+    final List<DateTime> customSchedule = const [],
+    final String? color,
+    final String? icon,
+    final TimeOfDay? preferredTime,
+    final int targetCount = 1,
+    final String? category,
   }) {
     final now = DateTime.now();
     return Habit(
@@ -62,13 +61,12 @@ class Habit {
   }
 
   /// Create from Map from database
-  factory Habit.fromMap(Map<String, dynamic> map) {
-    return Habit(
+  factory Habit.fromMap(final Map<String, dynamic> map) => Habit(
       id: map['id'] as String,
       title: map['title'] as String,
       description: map['description'] as String,
       recurrence: HabitRecurrence.values.firstWhere(
-        (e) => e.name == map['recurrence'],
+        (final e) => e.name == map['recurrence'],
         orElse: () => HabitRecurrence.daily,
       ),
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
@@ -78,8 +76,8 @@ class Habit {
       customSchedule: map['customSchedule'] != null
           ? (map['customSchedule'] as String)
               .split(',')
-              .where((dateStr) => dateStr.isNotEmpty)
-              .map((dateStr) => DateTime.fromMillisecondsSinceEpoch(int.parse(dateStr)))
+              .where((final dateStr) => dateStr.isNotEmpty)
+              .map((final dateStr) => DateTime.fromMillisecondsSinceEpoch(int.parse(dateStr)))
               .toList()
           : const [],
       isActive: (map['isActive'] as int) == 1,
@@ -94,7 +92,6 @@ class Habit {
           ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int)
           : null,
     );
-  }
   final String id;
   final String title;
   /// Alias for title to support legacy code
@@ -181,7 +178,7 @@ class Habit {
     'recurrence': recurrence.name,
     'createdAt': createdAt.millisecondsSinceEpoch,
     'endDate': endDate?.millisecondsSinceEpoch,
-    'customSchedule': customSchedule.map((date) => date.millisecondsSinceEpoch.toString()).join(','),
+    'customSchedule': customSchedule.map((final date) => date.millisecondsSinceEpoch.toString()).join(','),
     'isActive': isActive ? 1 : 0,
     'color': color,
     'icon': icon,
@@ -211,7 +208,7 @@ class Habit {
       'Habit(id: $id, title: $title, recurrence: $recurrence, targetCount: $targetCount)';
 
   /// Check if the habit is scheduled for a given date
-  bool isScheduledFor(DateTime date) {
+  bool isScheduledFor(final DateTime date) {
     // If there's an end date and we're past it, not scheduled
     if (endDate != null && date.isAfter(endDate!)) {
       return false;
@@ -241,7 +238,7 @@ class Habit {
         return date.weekday == 6 || date.weekday == 7;
       case HabitRecurrence.custom:
         // Check if date is in custom schedule
-        return customSchedule.any((scheduledDate) => 
+        return customSchedule.any((final scheduledDate) => 
           scheduledDate.year == date.year &&
           scheduledDate.month == date.month &&
           scheduledDate.day == date.day
@@ -249,10 +246,10 @@ class Habit {
     }
   }
 
-  static TimeOfDay _parseTimeOfDay(String s) {
-    final parts = s.split(":");
+  static TimeOfDay _parseTimeOfDay(final String s) {
+    final parts = s.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  static String _timeOfDayToString(TimeOfDay t) => '${t.hour}:${t.minute}';
+  static String _timeOfDayToString(final TimeOfDay t) => '${t.hour}:${t.minute}';
 }

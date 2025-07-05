@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
 
 class TaskInputDialog extends StatefulWidget {
   const TaskInputDialog({super.key, this.onSave});
@@ -25,8 +25,8 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
   bool _completed = false;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 1));
   bool _saving = false;
-  List<String> _tags = [];
-  List<String> _subtasks = ['']; // Always have at least one row
+  final List<String> _tags = [];
+  final List<String> _subtasks = ['']; // Always have at least one row
   String _priority = 'Medium';
   final List<TextEditingController> _subtaskControllers = [];
 
@@ -58,7 +58,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
     super.dispose();
   }
 
-  void _onSubtaskChanged(int index, String value) {
+  void _onSubtaskChanged(final int index, final String value) {
     setState(() {
       _subtasks[index] = value;
       // If editing the last row and it's not empty, add a new row
@@ -74,7 +74,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
     });
   }
 
-  void _onReorderSubtasks(int oldIndex, int newIndex) {
+  void _onReorderSubtasks(final int oldIndex, int newIndex) {
     setState(() {
       if (newIndex > oldIndex) newIndex--;
       final item = _subtasks.removeAt(oldIndex);
@@ -96,11 +96,11 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
     }
   }
 
-  void _showTagDialog() async {
+  Future<void> _showTagDialog() async {
     final controller = TextEditingController();
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Add Tag'),
         content: TextField(
           controller: controller,
@@ -127,18 +127,18 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
     );
   }
 
-  void _removeTag(String tag) {
+  void _removeTag(final String tag) {
     setState(() => _tags.remove(tag));
   }
 
-  void _showPriorityMenu() async {
+  Future<void> _showPriorityMenu() async {
     final priorities = ['Low', 'Medium', 'High', 'Urgent'];
     final selected = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(300, 300, 0, 0),
       items: priorities
           .map(
-            (p) => PopupMenuItem<String>(
+            (final p) => PopupMenuItem<String>(
               value: p,
               child: Row(
                 children: [
@@ -156,7 +156,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
     }
   }
 
-  Color _priorityColor(String p) {
+  Color _priorityColor(final String p) {
     switch (p) {
       case 'Low':
         return Colors.grey;
@@ -172,7 +172,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
     final canSave = _nameController.text.trim().isNotEmpty;
     final dateLabel = _dueDate.difference(DateTime.now()).inDays == 1
@@ -235,7 +235,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                   children: [
                     Checkbox(
                       value: _completed,
-                      onChanged: (v) => setState(() => _completed = v ?? false),
+                      onChanged: (final v) => setState(() => _completed = v ?? false),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -284,7 +284,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                       spacing: 6,
                       children: _tags
                           .map(
-                            (tag) => Chip(
+                            (final tag) => Chip(
                               label: Text(tag),
                               onDeleted: () => _removeTag(tag),
                               backgroundColor: colorScheme.primaryContainer,
@@ -302,12 +302,12 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                     physics: const NeverScrollableScrollPhysics(),
                     onReorder: _onReorderSubtasks,
                     buildDefaultDragHandles: false,
-                    children: List.generate(_subtasks.length, (i) {
+                    children: List.generate(_subtasks.length, (final i) {
                       final isLast = i == _subtasks.length - 1;
                       return Material(
                         key: ValueKey('subtask_$i'),
                         color: isLast && _subtasks[i].isEmpty
-                            ? colorScheme.surfaceVariant.withOpacity(0.2)
+                            ? colorScheme.surfaceContainerHighest.withOpacity(0.2)
                             : Colors.transparent,
                         child: Row(
                           children: [
@@ -316,8 +316,8 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                             Expanded(
                               child: TextField(
                                 controller: _subtaskControllers[i],
-                                onChanged: (v) => _onSubtaskChanged(i, v),
-                                onSubmitted: (v) => _onSubtaskChanged(i, v),
+                                onChanged: (final v) => _onSubtaskChanged(i, v),
+                                onSubmitted: (final v) => _onSubtaskChanged(i, v),
                                 decoration: const InputDecoration(
                                   hintText: 'Sub-task',
                                   border: InputBorder.none,
@@ -342,7 +342,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                   padding: const EdgeInsets.only(left: 40),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_month, color: Colors.pink, size: 22),
+                      const Icon(Icons.calendar_month, color: Colors.pink, size: 22),
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: _pickDueDate,
@@ -388,7 +388,7 @@ class _TaskInputDialogState extends State<TaskInputDialog> {
                           ? () async {
                               setState(() => _saving = true);
                               final subtasks = _subtasks
-                                  .where((s) => s.trim().isNotEmpty)
+                                  .where((final s) => s.trim().isNotEmpty)
                                   .toList();
                               widget.onSave?.call(
                                 _nameController.text.trim(),

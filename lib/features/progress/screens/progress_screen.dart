@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
 
 /// Progress screen showing XP, streaks, and analytics
 class ProgressScreen extends StatelessWidget {
   const ProgressScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
 
     return Scaffold(
@@ -19,7 +19,7 @@ class ProgressScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -41,7 +41,7 @@ class ProgressScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // XP and Level section with gradient
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(16),
@@ -54,7 +54,7 @@ class ProgressScreen extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -119,7 +119,7 @@ class ProgressScreen extends StatelessWidget {
                         ),
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
-                          widthFactor: 0.0, // 0 XP / 100 XP
+                          widthFactor: 0, // 0 XP / 100 XP
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -135,7 +135,7 @@ class ProgressScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Streak section with energetic gradient
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppTheme.energeticGradient,
                   borderRadius: BorderRadius.circular(16),
@@ -148,7 +148,7 @@ class ProgressScreen extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -206,7 +206,7 @@ class ProgressScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Weekly summary with success gradient
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppTheme.successGradient,
                   borderRadius: BorderRadius.circular(16),
@@ -219,7 +219,7 @@ class ProgressScreen extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -289,7 +289,6 @@ class ProgressScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: colorScheme.outline.withOpacity(0.2),
-                    width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -299,7 +298,7 @@ class ProgressScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -338,7 +337,7 @@ class ProgressScreen extends StatelessWidget {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: colorScheme.surfaceVariant.withOpacity(
+                                color: colorScheme.surfaceContainerHighest.withOpacity(
                                   0.5,
                                 ),
                                 borderRadius: BorderRadius.circular(40),
@@ -386,13 +385,12 @@ class ProgressScreen extends StatelessWidget {
 
   /// Build a stat item widget
   Widget _buildStatItem(
-    BuildContext context,
-    String value,
-    String label,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
+    final BuildContext context,
+    final String value,
+    final String label,
+    final IconData icon,
+    final Color color,
+  ) => Column(
       children: [
         Icon(icon, color: color, size: 32),
         const SizedBox(height: 8),
@@ -411,5 +409,4 @@ class ProgressScreen extends StatelessWidget {
         ),
       ],
     );
-  }
 }

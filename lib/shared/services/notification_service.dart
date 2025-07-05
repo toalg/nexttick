@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 import 'package:nexttick/shared/models/calendar_event.dart';
 import 'package:nexttick/shared/models/task.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Service for managing local notifications and reminders
 class NotificationService {
+
+  NotificationService._();
   static NotificationService? _instance;
   final FlutterLocalNotificationsPlugin _notifications = 
       FlutterLocalNotificationsPlugin();
-
-  NotificationService._();
 
   /// Get singleton instance
   static NotificationService get instance {

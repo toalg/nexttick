@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
@@ -118,7 +117,7 @@ class CalendarEvent {
             ? (map['reminderMinutes'] as String)
                   .split(',')
                   .where((final reminder) => reminder.isNotEmpty)
-                  .map((final reminder) => int.parse(reminder))
+                  .map(int.parse)
                   .toList()
             : null,
         taskId: map['taskId'] as String?,
@@ -258,10 +257,8 @@ class CalendarEvent {
   }
 
   /// Check if event conflicts with another event
-  bool conflictsWith(final CalendarEvent other) {
-    return startTime.isBefore(other.endTime) &&
+  bool conflictsWith(final CalendarEvent other) => startTime.isBefore(other.endTime) &&
         endTime.isAfter(other.startTime);
-  }
 
   /// Convert to Syncfusion Appointment
   Appointment toAppointment() => Appointment(

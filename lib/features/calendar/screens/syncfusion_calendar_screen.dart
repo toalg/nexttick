@@ -1,14 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:nexttick/core/theme/app_theme.dart';
 import 'package:nexttick/features/calendar/widgets/calendar_view_selector.dart';
 import 'package:nexttick/features/calendar/widgets/event_editor_dialog.dart';
 import 'package:nexttick/shared/data/calendar_data_source.dart';
 import 'package:nexttick/shared/models/calendar_event.dart';
+import 'package:nexttick/shared/models/task.dart';
 import 'package:nexttick/shared/services/calendar_service.dart';
 import 'package:nexttick/shared/services/task_service.dart';
 import 'package:nexttick/shared/widgets/multi_action_fab.dart';
-import 'package:nexttick/shared/models/task.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 /// Fantastical-style calendar screen using Syncfusion Calendar
 class SyncfusionCalendarScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
 
     return Scaffold(
@@ -76,45 +78,43 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   PreferredSizeWidget _buildAppBar(
     final BuildContext context,
     final ColorScheme colorScheme,
-  ) {
-    return AppBar(
-      title: const Text('Calendar'),
-      backgroundColor: colorScheme.surface,
-      foregroundColor: colorScheme.onSurface,
-      elevation: 0,
-      scrolledUnderElevation: 0.5,
-      actions: [
-        // View selector
-        CalendarViewSelector(
-          currentView: _currentView,
-          onViewChanged: (view) {
-            setState(() {
-              _currentView = view;
-            });
-          },
-        ),
+  ) => AppBar(
+    title: const Text('Calendar'),
+    backgroundColor: colorScheme.surface,
+    foregroundColor: colorScheme.onSurface,
+    elevation: 0,
+    scrolledUnderElevation: 0.5,
+    actions: [
+      // View selector
+      CalendarViewSelector(
+        currentView: _currentView,
+        onViewChanged: (final view) {
+          setState(() {
+            _currentView = view;
+          });
+        },
+      ),
 
-        // Filter button
-        IconButton(
-          icon: const Icon(Icons.filter_list),
-          onPressed: () => _showCategoryFilter(context),
-          tooltip: 'Filter categories',
-        ),
+      // Filter button
+      IconButton(
+        icon: const Icon(Icons.filter_list),
+        onPressed: () => _showCategoryFilter(context),
+        tooltip: 'Filter categories',
+      ),
 
-        // Today button
-        IconButton(
-          icon: const Icon(Icons.today),
-          onPressed: () {
-            _calendarController.displayDate = DateTime.now();
-            setState(() {
-              _focusedDate = DateTime.now();
-            });
-          },
-          tooltip: 'Go to today',
-        ),
-      ],
-    );
-  }
+      // Today button
+      IconButton(
+        icon: const Icon(Icons.today),
+        onPressed: () {
+          _calendarController.displayDate = DateTime.now();
+          setState(() {
+            _focusedDate = DateTime.now();
+          });
+        },
+        tooltip: 'Go to today',
+      ),
+    ],
+  );
 
   /// Build the main calendar body
   Widget _buildCalendarBody(
@@ -150,7 +150,7 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
               child: SfCalendar(
                 controller: _calendarController,
                 view: _currentView,
-                dataSource: _dataSource!,
+                dataSource: _dataSource,
                 initialDisplayDate: _focusedDate,
 
                 // Styling
@@ -207,7 +207,6 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
                 monthViewSettings: MonthViewSettings(
                   appointmentDisplayMode:
                       MonthAppointmentDisplayMode.appointment,
-                  showAgenda: false,
                   appointmentDisplayCount: 4,
                   monthCellStyle: MonthCellStyle(
                     backgroundColor: colorScheme.surface,
@@ -250,74 +249,67 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   Widget _buildCalendarHeader(
     final BuildContext context,
     final ColorScheme colorScheme,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
+  ) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+    decoration: BoxDecoration(
+      color: colorScheme.surface,
+      border: Border(
+        bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
-      child: Row(
-        children: [
-          // Month/Year display
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _formatMonthYear(_focusedDate),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                if (_currentView == CalendarView.month) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_getEventsCountForMonth(_focusedDate)} events this month',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Navigation buttons
-          Row(
+    ),
+    child: Row(
+      children: [
+        // Month/Year display
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () => _navigateCalendar(-1),
-                style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.primaryContainer,
-                  foregroundColor: colorScheme.onPrimaryContainer,
+              Text(
+                _formatMonthYear(_focusedDate),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () => _navigateCalendar(1),
-                style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.primaryContainer,
-                  foregroundColor: colorScheme.onPrimaryContainer,
+              if (_currentView == CalendarView.month) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${_getEventsCountForMonth(_focusedDate)} events this month',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
 
-  /// Build floating action button for creating events
+        // Navigation buttons
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => _navigateCalendar(-1),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () => _navigateCalendar(1),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 
   /// Handle calendar tap events
   void _handleCalendarTap(final CalendarTapDetails details) {
@@ -363,7 +355,7 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Handle view changes
-  void _handleViewChanged(ViewChangedDetails details) {
+  void _handleViewChanged(final ViewChangedDetails details) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -374,7 +366,7 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Navigate calendar by specified months
-  void _navigateCalendar(int months) {
+  void _navigateCalendar(final int months) {
     final newDate = DateTime(
       _focusedDate.year,
       _focusedDate.month + months,
@@ -387,7 +379,7 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Format month and year for display
-  String _formatMonthYear(DateTime date) {
+  String _formatMonthYear(final DateTime date) {
     const months = [
       'January',
       'February',
@@ -406,53 +398,23 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Get events count for current month
-  int _getEventsCountForMonth(DateTime date) {
+  int _getEventsCountForMonth(final DateTime date) {
     final monthEvents = _calendarService.getEventsForDateRange(
-      startDate: DateTime(date.year, date.month, 1),
+      startDate: DateTime(date.year, date.month),
       endDate: DateTime(date.year, date.month + 1, 0),
     );
     return monthEvents.length;
-  }
-
-  /// Create a new event
-  void _createNewEvent(BuildContext context, {DateTime? selectedDate}) {
-    showDialog<CalendarEvent>(
-      context: context,
-      builder: (context) =>
-          EventEditorDialog(selectedDate: selectedDate ?? DateTime.now()),
-    ).then((event) {
-      if (event != null) {
-        _calendarService
-            .createEvent(
-              title: event.title,
-              startTime: event.startTime,
-              endTime: event.endTime,
-              description: event.description,
-              category: event.category,
-              priority: event.priority,
-              location: event.location,
-              notes: event.notes,
-              isAllDay: event.isAllDay,
-            )
-            .then((newEvent) {
-              if (mounted) {
-                setState(() {
-                  _dataSource?.addEvent(newEvent);
-                });
-              }
-            });
-      }
-    });
   }
 
   /// Edit an existing event
   void _editEvent(final BuildContext context, final Appointment appointment) {
     showDialog<CalendarEvent>(
       context: context,
-      builder: (context) => EventEditorDialog.edit(appointment: appointment),
-    ).then((updatedEvent) {
+      builder: (final context) =>
+          EventEditorDialog.edit(appointment: appointment),
+    ).then((final updatedEvent) {
       if (updatedEvent != null) {
-        _calendarService.updateEvent(updatedEvent).then((event) {
+        _calendarService.updateEvent(updatedEvent).then((final event) {
           if (mounted) {
             setState(() {
               _dataSource?.updateEvents(_calendarService.events);
@@ -464,40 +426,39 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Move an event to a new time
-  void _moveEvent(Appointment appointment, DateTime newStartTime) {
+  void _moveEvent(final Appointment appointment, final DateTime newStartTime) {
     final eventId = appointment.id.toString();
-    _calendarService
-        .moveEvent(eventId: eventId, newStartTime: newStartTime)
-        .then((movedEvent) {
-          if (mounted) {
-            setState(() {
-              _dataSource?.updateEvents(_calendarService.events);
-            });
-          }
-          // Show snackbar confirmation
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Event moved to ${_formatEventTime(newStartTime)}',
-                ),
-                action: SnackBarAction(
-                  label: 'Undo',
-                  onPressed: () {
-                    // Implement undo functionality
-                  },
-                ),
-              ),
-            );
-          }
+    final duration = appointment.endTime.difference(appointment.startTime);
+    final newEndTime = newStartTime.add(duration);
+
+    _calendarService.moveEvent(eventId, newStartTime, newEndTime).then((_) {
+      if (mounted) {
+        setState(() {
+          _dataSource?.updateEvents(_calendarService.events);
         });
+      }
+      // Show snackbar confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Event moved to ${_formatEventTime(newStartTime)}'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                // Implement undo functionality
+              },
+            ),
+          ),
+        );
+      }
+    });
   }
 
   /// Show event context menu
   void _showEventContextMenu(
-    BuildContext context,
-    Appointment appointment,
-    Offset position,
+    final BuildContext context,
+    final Appointment appointment,
+    final Offset position,
   ) {
     showMenu(
       context: context,
@@ -531,12 +492,12 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Duplicate an event
-  void _duplicateEvent(Appointment appointment) {
+  void _duplicateEvent(final Appointment appointment) {
     // Implementation for duplicating events
   }
 
   /// Delete an event
-  void _deleteEvent(Appointment appointment) {
+  void _deleteEvent(final Appointment appointment) {
     final eventId = appointment.id.toString();
     _calendarService.deleteEvent(eventId).then((_) {
       if (mounted) {
@@ -551,30 +512,32 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Show category filter dialog
-  void _showCategoryFilter(BuildContext context) {
+  void _showCategoryFilter(final BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Filter Categories'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: EventCategory.values.map((category) {
-            return CheckboxListTile(
-              title: Text(category.name.toUpperCase()),
-              value: _visibleCategories.contains(category),
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value == true) {
-                    _visibleCategories.add(category);
-                  } else {
-                    _visibleCategories.remove(category);
-                  }
-                });
-                Navigator.of(context).pop();
-                _updateVisibleEvents();
-              },
-            );
-          }).toList(),
+          children: EventCategory.values
+              .map(
+                (final category) => CheckboxListTile(
+                  title: Text(category.name.toUpperCase()),
+                  value: _visibleCategories.contains(category),
+                  onChanged: (final bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        _visibleCategories.add(category);
+                      } else {
+                        _visibleCategories.remove(category);
+                      }
+                    });
+                    Navigator.of(context).pop();
+                    _updateVisibleEvents();
+                  },
+                ),
+              )
+              .toList(),
         ),
         actions: [
           TextButton(
@@ -587,9 +550,9 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Update visible events based on category filter
-  void _updateVisibleEvents() async {
+  Future<void> _updateVisibleEvents() async {
     final filteredEvents = _calendarService.events
-        .where((event) => _visibleCategories.contains(event.category))
+        .where((final event) => _visibleCategories.contains(event.category))
         .toList();
     final tasks = await _taskService.getAllTasks();
     if (mounted) {
@@ -607,9 +570,9 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
 
   /// Show task completion dialog
   void _showTaskCompletionDialog(final String taskId) {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Task Action'),
         content: const Text('What would you like to do with this task?'),
         actions: [
@@ -656,10 +619,10 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Edit a task
-  void _editTask(final String taskId) async {
+  Future<void> _editTask(final String taskId) async {
     try {
       final tasks = await _taskService.getAllTasks();
-      final task = tasks.firstWhere((t) => t.id == taskId);
+      final task = tasks.firstWhere((final t) => t.id == taskId);
       // Here you would typically show a task edit dialog
       // For now, we'll just show a message
       if (mounted) {
@@ -677,18 +640,20 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
   }
 
   /// Format event time for display
-  String _formatEventTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}';
-  }
+  String _formatEventTime(final DateTime dateTime) =>
+      '${dateTime.hour.toString().padLeft(2, '0')}:'
+      '${dateTime.minute.toString().padLeft(2, '0')}';
 
-  void _onCalendarCellTap(DateTime date) async {
-    final events = _calendarService.events.where((event) {
-      return event.startTime.year == date.year &&
-          event.startTime.month == date.month &&
-          event.startTime.day == date.day;
-    }).toList();
-    final tasks = (await _taskService.getAllTasks()).where((task) {
+  Future<void> _onCalendarCellTap(final DateTime date) async {
+    final events = _calendarService.events
+        .where(
+          (final event) =>
+              event.startTime.year == date.year &&
+              event.startTime.month == date.month &&
+              event.startTime.day == date.day,
+        )
+        .toList();
+    final tasks = (await _taskService.getAllTasks()).where((final task) {
       if (task.dueDate == null) return false;
       return task.dueDate!.year == date.year &&
           task.dueDate!.month == date.month &&
@@ -701,16 +666,25 @@ class _SyncfusionCalendarScreenState extends State<SyncfusionCalendarScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (context) => _DayDetailSheet(
+      builder: (final context) => _DayDetailSheet(
         date: date,
         events: events,
         tasks: tasks,
-        onTaskComplete: (taskId) async {
-          await _completeTask(taskId);
-          Navigator.of(context).pop();
-        },
+        onTaskComplete: _onTaskComplete,
       ),
     );
+  }
+
+  void _onTaskComplete(final String taskId) {
+    _completeTask(taskId);
+  }
+
+  void _onEventMoved(
+    final String eventId,
+    final DateTime newStartTime,
+    final DateTime newEndTime,
+  ) {
+    _calendarService.moveEvent(eventId, newStartTime, newEndTime);
   }
 }
 
@@ -746,7 +720,6 @@ Appointment _taskToAppointment(final Task task) {
       task.dueDate!.month,
       task.dueDate!.day,
       9,
-      0,
     );
     endTime = startTime.add(const Duration(minutes: 30));
     isAllDay = false;
@@ -773,7 +746,6 @@ Appointment _taskToAppointment(final Task task) {
 
 class _DayDetailSheet extends StatelessWidget {
   const _DayDetailSheet({
-    super.key,
     required this.date,
     required this.events,
     required this.tasks,
@@ -782,11 +754,11 @@ class _DayDetailSheet extends StatelessWidget {
 
   final DateTime date;
   final List<CalendarEvent> events;
-  final List tasks;
+  final List<Task> tasks;
   final void Function(String taskId) onTaskComplete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final formattedDate =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -827,13 +799,13 @@ class _DayDetailSheet extends StatelessWidget {
             if (events.isNotEmpty) ...[
               _buildSectionHeader(context, 'Events', Icons.event),
               const SizedBox(height: 8),
-              ...events.map((event) => _buildEventTile(context, event)),
+              ...events.map((final event) => _buildEventTile(context, event)),
               const SizedBox(height: 16),
             ],
             if (tasks.isNotEmpty) ...[
               _buildSectionHeader(context, 'Tasks', Icons.task),
               const SizedBox(height: 8),
-              ...tasks.map((task) => _buildTaskTile(context, task)),
+              ...tasks.map((final task) => _buildTaskTile(context, task)),
             ],
             if (events.isEmpty && tasks.isEmpty) _buildEmptyState(context),
           ],
@@ -843,56 +815,53 @@ class _DayDetailSheet extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(
-    BuildContext context,
-    String title,
-    IconData icon,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+    final BuildContext context,
+    final String title,
+    final IconData icon,
+  ) => Row(
+    children: [
+      Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+      const SizedBox(width: 8),
+      Text(
+        title,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.primary,
         ),
-      ],
-    );
-  }
-
-  Widget _buildEventTile(BuildContext context, CalendarEvent event) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: event.color,
-          child: const Icon(Icons.event, color: Colors.white, size: 16),
-        ),
-        title: Text(event.title),
-        subtitle: Text(
-          '${event.startTime.hour.toString().padLeft(2, '0')}:${event.startTime.minute.toString().padLeft(2, '0')} - '
-          '${event.endTime.hour.toString().padLeft(2, '0')}:${event.endTime.minute.toString().padLeft(2, '0')}',
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-    );
-  }
+    ],
+  );
 
-  Widget _buildTaskTile(BuildContext context, task) {
+  Widget _buildEventTile(
+    final BuildContext context,
+    final CalendarEvent event,
+  ) => Card(
+    margin: const EdgeInsets.only(bottom: 8),
+    child: ListTile(
+      leading: CircleAvatar(
+        backgroundColor: event.color,
+        child: const Icon(Icons.event, color: Colors.white, size: 16),
+      ),
+      title: Text(event.title),
+      subtitle: Text(
+        '${event.startTime.hour.toString().padLeft(2, '0')}:${event.startTime.minute.toString().padLeft(2, '0')} - '
+        '${event.endTime.hour.toString().padLeft(2, '0')}:${event.endTime.minute.toString().padLeft(2, '0')}',
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ),
+  );
+
+  Widget _buildTaskTile(final BuildContext context, final Task task) {
     final isCompleted = task.status == TaskStatus.completed;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: Checkbox(
           value: isCompleted,
-          onChanged: isCompleted
-              ? null
-              : (_) => onTaskComplete(task.id as String),
+          onChanged: isCompleted ? null : (_) => onTaskComplete(task.id),
         ),
         title: Text(
-          task.title as String,
+          task.title,
           style: TextStyle(
             decoration: isCompleted ? TextDecoration.lineThrough : null,
             color: isCompleted
@@ -901,7 +870,7 @@ class _DayDetailSheet extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          (task.description ?? '') as String,
+          task.description ?? '',
           style: TextStyle(
             decoration: isCompleted ? TextDecoration.lineThrough : null,
             color: isCompleted
@@ -915,38 +884,36 @@ class _DayDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(
-              Icons.calendar_month_outlined,
-              size: 48,
+  Widget _buildEmptyState(final BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.calendar_month_outlined,
+            size: 48,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No events or tasks for this day',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No events or tasks for this day',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap the + button to add something new',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap the + button to add something new',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _priorityFlag(priority) {
+  Widget _priorityFlag(final TaskPriority priority) {
     switch (priority) {
       case TaskPriority.low:
         return const Icon(Icons.flag, color: Color(0xFF9E9E9E));

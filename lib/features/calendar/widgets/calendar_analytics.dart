@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/calendar_event.dart';
-import '../../../shared/models/habit.dart';
-import '../../../shared/models/habit_completion.dart';
-import '../../../shared/models/task.dart';
-import '../../../shared/services/calendar_service.dart';
-import '../../../shared/services/database_service.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
+import 'package:nexttick/shared/models/calendar_event.dart';
+import 'package:nexttick/shared/models/habit.dart';
+import 'package:nexttick/shared/models/habit_completion.dart';
+import 'package:nexttick/shared/models/task.dart';
+import 'package:nexttick/shared/services/calendar_service.dart';
+import 'package:nexttick/shared/services/database_service.dart';
 
 /// Calendar analytics widget showing productivity insights
 class CalendarAnalytics extends StatefulWidget {
@@ -74,16 +74,16 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
   }
 
   Map<String, dynamic> _calculateAnalytics(
-    List<CalendarEvent> events,
-    List<Habit> habits,
-    List<HabitCompletion> completions,
-    List<Task> tasks,
+    final List<CalendarEvent> events,
+    final List<Habit> habits,
+    final List<HabitCompletion> completions,
+    final List<Task> tasks,
   ) {
     final totalDays = _endDate.difference(_startDate).inDays + 1;
     
     // Event analytics
     final totalEvents = events.length;
-    final completedEvents = events.where((e) => e.isCompleted).length;
+    final completedEvents = events.where((final e) => e.isCompleted).length;
     final eventsPerDay = totalEvents / totalDays;
     
     // Category breakdown
@@ -94,20 +94,16 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     }
     
     // Habit analytics
-    final activeHabits = habits.where((h) => h.isActive).length;
-    final habitCompletions = completions.where((c) {
-      return c.date.isAfter(_startDate) && c.date.isBefore(_endDate);
-    }).length;
+    final activeHabits = habits.where((final h) => h.isActive).length;
+    final habitCompletions = completions.where((final c) => c.date.isAfter(_startDate) && c.date.isBefore(_endDate)).length;
     
     // Task analytics
-    final tasksInPeriod = tasks.where((t) {
-      return t.dueDate != null &&
+    final tasksInPeriod = tasks.where((final t) => t.dueDate != null &&
           t.dueDate!.isAfter(_startDate) &&
-          t.dueDate!.isBefore(_endDate);
-    }).toList();
+          t.dueDate!.isBefore(_endDate)).toList();
     
     final completedTasks = tasksInPeriod
-        .where((t) => t.status == TaskStatus.completed)
+        .where((final t) => t.status == TaskStatus.completed)
         .length;
     
     // Productivity metrics
@@ -129,7 +125,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     };
   }
 
-  int _calculateBusyDays(List<CalendarEvent> events) {
+  int _calculateBusyDays(final List<CalendarEvent> events) {
     final daysWithEvents = <String>{};
     for (final event in events) {
       final dateKey = '${event.startTime.year}-${event.startTime.month}-${event.startTime.day}';
@@ -138,7 +134,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     return daysWithEvents.length;
   }
 
-  Map<int, int> _calculateProductiveHours(List<CalendarEvent> events) {
+  Map<int, int> _calculateProductiveHours(final List<CalendarEvent> events) {
     final hourCounts = <int, int>{};
     for (final event in events) {
       if (!event.isAllDay) {
@@ -150,7 +146,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
 
     if (_isLoading) {
@@ -185,8 +181,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     );
   }
 
-  Widget _buildLoadingState(ColorScheme colorScheme) {
-    return Container(
+  Widget _buildLoadingState(final ColorScheme colorScheme) => Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -198,10 +193,8 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
         ),
       ),
     );
-  }
 
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
-    return Row(
+  Widget _buildHeader(final BuildContext context, final ColorScheme colorScheme) => Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
@@ -243,9 +236,8 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
         ),
       ],
     );
-  }
 
-  Widget _buildOverviewCards(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildOverviewCards(final BuildContext context, final ColorScheme colorScheme) {
     final totalEvents = _analytics['totalEvents'] ?? 0;
     final completedEvents = _analytics['completedEvents'] ?? 0;
     final busyDays = _analytics['busyDays'] ?? 0;
@@ -293,22 +285,20 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
   }
 
   Widget _buildMetricCard(
-    BuildContext context,
-    ColorScheme colorScheme,
-    String title,
-    String value,
-    String subtitle,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
+    final BuildContext context,
+    final ColorScheme colorScheme,
+    final String title,
+    final String value,
+    final String subtitle,
+    final IconData icon,
+    final Color color,
+  ) => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: color.withValues(alpha: 0.2),
-          width: 1,
         ),
       ),
       child: Column(
@@ -356,9 +346,8 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
         ],
       ),
     );
-  }
 
-  Widget _buildCategoryChart(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildCategoryChart(final BuildContext context, final ColorScheme colorScheme) {
     final categoryBreakdown = _analytics['categoryBreakdown'] as Map<EventCategory, int>? ?? {};
     
     if (categoryBreakdown.isEmpty) {
@@ -376,10 +365,10 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
           ),
         ),
         const SizedBox(height: 12),
-        ...categoryBreakdown.entries.map((entry) {
+        ...categoryBreakdown.entries.map((final entry) {
           final category = entry.key;
           final count = entry.value;
-          final total = categoryBreakdown.values.reduce((a, b) => a + b);
+          final total = categoryBreakdown.values.reduce((final a, final b) => a + b);
           final percentage = (count / total * 100).toStringAsFixed(1);
           final color = CalendarEvent.getDefaultColorForCategory(category);
           
@@ -436,10 +425,10 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     );
   }
 
-  Widget _buildProductivityInsights(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildProductivityInsights(final BuildContext context, final ColorScheme colorScheme) {
     final productiveHours = _analytics['productiveHours'] as Map<int, int>? ?? {};
     final mostProductiveHour = productiveHours.entries
-        .fold<MapEntry<int, int>?>(null, (prev, current) {
+        .fold<MapEntry<int, int>?>(null, (final prev, final current) {
       if (prev == null || current.value > prev.value) {
         return current;
       }
@@ -490,14 +479,13 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
   }
 
   Widget _buildInsightItem(
-    BuildContext context,
-    ColorScheme colorScheme,
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
+    final BuildContext context,
+    final ColorScheme colorScheme,
+    final String title,
+    final String value,
+    final IconData icon,
+    final Color color,
+  ) => Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
@@ -534,12 +522,11 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
         ),
       ],
     );
-  }
 
-  void _showDetailedAnalytics(BuildContext context) {
+  void _showDetailedAnalytics(final BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Detailed Analytics'),
         content: const Text(
           'Detailed analytics view will provide in-depth insights '
@@ -555,7 +542,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(final DateTime date) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -563,7 +550,7 @@ class _CalendarAnalyticsState extends State<CalendarAnalytics> {
     return '${months[date.month - 1]} ${date.day}';
   }
 
-  String _formatHour(int hour) {
+  String _formatHour(final int hour) {
     if (hour == 0) return '12 AM';
     if (hour == 12) return '12 PM';
     if (hour < 12) return '$hour AM';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/habit.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
+import 'package:nexttick/shared/models/habit.dart';
 
 /// Dialog for creating a new habit with icon, color, and details
 class HabitInputDialog extends StatefulWidget {
@@ -78,13 +78,13 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final canSave = _nameController.text.trim().isNotEmpty;
 
     final dialogWidth = MediaQuery.of(context).size.width * 0.33;
-    final colorBoxSize = 36.0;
+    const colorBoxSize = 36.0;
 
     return Dialog(
       backgroundColor: colorScheme.surface,
@@ -103,7 +103,6 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Icon picker
                     SizedBox(
@@ -111,14 +110,14 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _icons.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, i) => GestureDetector(
+                        separatorBuilder: (_, final __) => const SizedBox(width: 8),
+                        itemBuilder: (final context, final i) => GestureDetector(
                           onTap: () => setState(() => _selectedIcon = i),
                           child: CircleAvatar(
                             radius: 18,
                             backgroundColor: i == _selectedIcon
                                 ? colorScheme.primary.withOpacity(0.2)
-                                : colorScheme.surfaceVariant,
+                                : colorScheme.surfaceContainerHighest,
                             child: Icon(
                               _icons[i],
                               color: i == _selectedIcon
@@ -185,10 +184,9 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
                             crossAxisCount: 6,
                             mainAxisSpacing: 6,
                             crossAxisSpacing: 6,
-                            childAspectRatio: 1,
                           ),
                       itemCount: _colors.length,
-                      itemBuilder: (context, i) => GestureDetector(
+                      itemBuilder: (final context, final i) => GestureDetector(
                         onTap: () => setState(() => _selectedColor = i),
                         child: Container(
                           width: colorBoxSize,
@@ -311,8 +309,7 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
-    return Row(
+  Widget _buildHeader(final BuildContext context, final ColorScheme colorScheme) => Row(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
@@ -358,5 +355,4 @@ class _HabitInputDialogState extends State<HabitInputDialog> {
         ),
       ],
     );
-  }
 }

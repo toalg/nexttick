@@ -1,421 +1,513 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:nexttick/shared/models/habit.dart';
-import 'package:nexttick/shared/models/task.dart';
-import 'package:nexttick/shared/models/calendar_event.dart';
-import 'package:nexttick/shared/models/habit_completion.dart';
 
-/// Database service for managing local data with web compatibility
+import 'package:nexttick/shared/models/habit.dart';
+import 'package:nexttick/shared/models/habit_completion.dart';
+import 'package:nexttick/shared/models/task.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+
+/// Database service for managing local SQLite database
 class DatabaseService {
+
   DatabaseService._();
   static DatabaseService? _instance;
-  static SharedPreferences? _prefs;
+  static Database? _database;
 
-  /// Get singleton instance
-  factory DatabaseService() {
+  static DatabaseService get instance {
     _instance ??= DatabaseService._();
     return _instance!;
   }
 
-  /// Get singleton instance (backward compatibility)
-  static DatabaseService get instance => DatabaseService();
-
-  /// Get SharedPreferences instance
-  Future<SharedPreferences> get _preferences async {
-    _prefs ??= await SharedPreferences.getInstance();
-    return _prefs!;
+  /// Get database instance
+  Future<Database> get database async {
+    _database ??= await _initDatabase();
+    return _database!;
   }
 
   /// Initialize database
-  Future<void> initialize() async {
-    await _preferences; // Initialize storage
+  Future<Database> _initDatabase() async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    final path = join(documentsDirectory.path, 'nexttick.db');
+
+    return openDatabase(
+      path,
+      version: 1,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
-  // Storage keys
-  static const String _habitsKey = 'habits';
-  static const String _tasksKey = 'tasks';
-  static const String _completionsKey = 'habit_completions';
-  static const String _calendarEventsKey = 'calendar_events';
+  /// Create database tables
+  Future<void> _onCreate(final Database db, final int version) async {
+    // Habits table
+    await db.execute('''
+      CREATE TABLE habits (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        frequency TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        color TEXT,
+        icon TEXT,
+        category TEXT,
+        reminder_time TEXT,
+        streak_count INTEGER DEFAULT 0,
+        total_completions INTEGER DEFAULT 0
+      )
+    ''');
 
-  /// Helper method to get list from storage
-  Future<List<Map<String, dynamic>>> _getList(String key) async {
-    final prefs = await _preferences;
-    final jsonString = prefs.getString(key);
-    if (jsonString == null) return [];
-    
-    final List<dynamic> jsonList = jsonDecode(jsonString) as List<dynamic>;
-    return jsonList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    // Habit completions table
+    await db.execute('''
+      CREATE TABLE habit_completions (
+        id TEXT PRIMARY KEY,
+        habit_id TEXT NOT NULL,
+        completed_at TEXT NOT NULL,
+        notes TEXT,
+        mood_rating INTEGER,
+        FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Tasks table
+    await db.execute('''
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        due_date TEXT,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        tags TEXT,
+        subtasks TEXT,
+        habit_id TEXT,
+        FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE SET NULL
+      )
+    ''');
+
+    // Calendar events table
+    await db.execute('''
+      CREATE TABLE calendar_events (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        is_all_day INTEGER NOT NULL DEFAULT 0,
+        location TEXT,
+        category TEXT,
+        priority TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // User progress table
+    await db.execute('''
+      CREATE TABLE user_progress (
+        id TEXT PRIMARY KEY,
+        date TEXT NOT NULL,
+        total_habits INTEGER DEFAULT 0,
+        completed_habits INTEGER DEFAULT 0,
+        total_tasks INTEGER DEFAULT 0,
+        completed_tasks INTEGER DEFAULT 0,
+        xp_earned INTEGER DEFAULT 0,
+        streak_maintained INTEGER DEFAULT 0,
+        mood_rating INTEGER,
+        notes TEXT
+      )
+    ''');
   }
 
-  /// Helper method to save list to storage
-  Future<void> _saveList(String key, List<Map<String, dynamic>> list) async {
-    final prefs = await _preferences;
-    final jsonString = jsonEncode(list);
-    await prefs.setString(key, jsonString);
+  /// Upgrade database schema
+  Future<void> _onUpgrade(final Database db, final int oldVersion, final int newVersion) async {
+    // Handle future schema upgrades here
   }
 
-  /// Helper method to add item to list
-  Future<void> _addToList(String key, Map<String, dynamic> item) async {
-    final list = await _getList(key);
-    list.add(item);
-    await _saveList(key, list);
+  // ===== HABITS =====
+
+  /// Save a habit to the database
+  Future<void> saveHabit(final Habit habit) async {
+    final db = await database;
+    await db.insert(
+      'habits',
+      habit.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  /// Helper method to update item in list
-  Future<void> _updateInList(String key, String id, Map<String, dynamic> updatedItem) async {
-    final list = await _getList(key);
-    final index = list.indexWhere((item) => item['id'] == id);
-    if (index != -1) {
-      list[index] = updatedItem;
-      await _saveList(key, list);
-    }
-  }
-
-  /// Helper method to remove item from list
-  Future<void> _removeFromList(String key, String id) async {
-    final list = await _getList(key);
-    list.removeWhere((item) => item['id'] == id);
-    await _saveList(key, list);
-  }
-
-  /// Habit operations
-  Future<void> insertHabit(final Habit habit) async {
-    await _addToList(_habitsKey, habit.toMap());
-  }
-
+  /// Get all habits
   Future<List<Habit>> getAllHabits() async {
-    final list = await _getList(_habitsKey);
-    return list.map((item) => Habit.fromMap(item)).toList();
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('habits');
+    return List.generate(maps.length, (final i) => Habit.fromMap(maps[i]));
   }
 
-  Future<List<Habit>> getHabits() async {
-    return getAllHabits();
+  /// Get active habits
+  Future<List<Habit>> getActiveHabits() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habits',
+      where: 'is_active = ?',
+      whereArgs: [1],
+    );
+    return List.generate(maps.length, (final i) => Habit.fromMap(maps[i]));
   }
 
+  /// Get habit by ID
   Future<Habit?> getHabitById(final String id) async {
-    final list = await _getList(_habitsKey);
-    try {
-      final habitMap = list.firstWhere((item) => item['id'] == id);
-      return Habit.fromMap(habitMap);
-    } catch (e) {
-      return null;
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habits',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Habit.fromMap(maps.first);
     }
+    return null;
   }
 
-  Future<void> updateHabit(final Habit habit) async {
-    await _updateInList(_habitsKey, habit.id, habit.toMap());
+  /// Update a habit
+  Future<void> updateHabit(final String id, final Habit updatedHabit) async {
+    final db = await database;
+    await db.update(
+      'habits',
+      updatedHabit.toMap(),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
+  /// Delete a habit
   Future<void> deleteHabit(final String id) async {
-    await _removeFromList(_habitsKey, id);
+    final db = await database;
+    await db.delete('habits', where: 'id = ?', whereArgs: [id]);
   }
 
+  /// Get habits by category
   Future<List<Habit>> getHabitsByCategory(final String category) async {
-    final list = await _getList(_habitsKey);
-    final filtered = list.where((item) => item['category'] == category).toList();
-    return filtered.map((item) => Habit.fromMap(item)).toList();
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habits',
+      where: 'category = ? AND is_active = ?',
+      whereArgs: [category, 1],
+    );
+    return List.generate(maps.length, (final i) => Habit.fromMap(maps[i]));
   }
 
-  /// Task operations
-  Future<void> insertTask(final Task task) async {
-    await _addToList(_tasksKey, task.toMap());
+  /// Get habits for a specific date range
+  Future<List<Habit>> getHabitsForDateRange(
+    final DateTime startDate,
+    final DateTime endDate,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habits',
+      where: 'created_at BETWEEN ? AND ?',
+      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+    );
+    return List.generate(maps.length, (final i) => Habit.fromMap(maps[i]));
   }
 
+  // ===== HABIT COMPLETIONS =====
+
+  /// Save a habit completion
+  Future<void> saveHabitCompletion(final HabitCompletion completion) async {
+    final db = await database;
+    await db.insert(
+      'habit_completions',
+      completion.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Get completions for a habit
+  Future<List<HabitCompletion>> getCompletionsForHabit(
+    final String habitId,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habit_completions',
+      where: 'habit_id = ?',
+      whereArgs: [habitId],
+      orderBy: 'completed_at DESC',
+    );
+    return List.generate(maps.length, (final i) => HabitCompletion.fromMap(maps[i]));
+  }
+
+  /// Get completions for a date range
+  Future<List<HabitCompletion>> getCompletionsForDateRange(
+    final DateTime startDate,
+    final DateTime endDate,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habit_completions',
+      where: 'completed_at BETWEEN ? AND ?',
+      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+      orderBy: 'completed_at DESC',
+    );
+    return List.generate(maps.length, (final i) => HabitCompletion.fromMap(maps[i]));
+  }
+
+  /// Get recent completions for a habit
+  Future<List<HabitCompletion>> getRecentCompletions(
+    final String habitId,
+    final int limit,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habit_completions',
+      where: 'habit_id = ?',
+      whereArgs: [habitId],
+      orderBy: 'completed_at DESC',
+      limit: limit,
+    );
+    return List.generate(maps.length, (final i) => HabitCompletion.fromMap(maps[i]));
+  }
+
+  /// Delete a completion
+  Future<void> deleteCompletion(final String id) async {
+    final db = await database;
+    await db.delete('habit_completions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ===== TASKS =====
+
+  /// Save a task
+  Future<void> saveTask(final Task task) async {
+    final db = await database;
+    await db.insert(
+      'tasks',
+      task.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Get all tasks
   Future<List<Task>> getAllTasks() async {
-    final list = await _getList(_tasksKey);
-    return list.map((item) => Task.fromMap(item)).toList();
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('tasks');
+    return List.generate(maps.length, (final i) => Task.fromMap(maps[i]));
   }
 
-  Future<List<Task>> getTasks(final DateTime day) async {
-    final list = await _getList(_tasksKey);
-    final startOfDay = DateTime(day.year, day.month, day.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-    
-    final filtered = list.where((item) {
-      if (item['due_date'] == null) return false;
-      final dueDate = DateTime.fromMillisecondsSinceEpoch(item['due_date'] as int);
-      return dueDate.isAfter(startOfDay) && dueDate.isBefore(endOfDay);
-    }).toList();
-    
-    return filtered.map((item) => Task.fromMap(item)).toList();
+  /// Get tasks by status
+  Future<List<Task>> getTasksByStatus(final String status) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tasks',
+      where: 'status = ?',
+      whereArgs: [status],
+    );
+    return List.generate(maps.length, (final i) => Task.fromMap(maps[i]));
   }
 
-  Future<List<Task>> getTasksByHabitId(final String habitId) async {
-    final list = await _getList(_tasksKey);
-    final filtered = list.where((item) => item['habit_id'] == habitId).toList();
-    return filtered.map((item) => Task.fromMap(item)).toList();
+  /// Get tasks for a date range
+  Future<List<Task>> getTasksForDateRange(
+    final DateTime startDate,
+    final DateTime endDate,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tasks',
+      where: 'due_date BETWEEN ? AND ?',
+      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+    );
+    return List.generate(maps.length, (final i) => Task.fromMap(maps[i]));
   }
 
-  Future<Task?> getTaskById(String id) async {
-    final list = await _getList(_tasksKey);
-    try {
-      final taskMap = list.firstWhere((item) => item['id'] == id);
-      return Task.fromMap(taskMap);
-    } catch (e) {
-      return null;
-    }
+  /// Update task status
+  Future<void> updateTaskStatus(final String id, final String status) async {
+    final db = await database;
+    await db.update(
+      'tasks',
+      {'status': status},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  Future<void> updateTask(final Task task) async {
-    await _updateInList(_tasksKey, task.id, task.toMap());
-  }
-
+  /// Delete a task
   Future<void> deleteTask(final String id) async {
-    await _removeFromList(_tasksKey, id);
+    final db = await database;
+    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<List<Task>> getTasksDueToday() async {
-    return getTasks(DateTime.now());
+  // ===== USER PROGRESS =====
+
+  /// Save user progress
+  Future<void> saveProgress(final Map<String, dynamic> progress) async {
+    final db = await database;
+    await db.insert(
+      'user_progress',
+      progress,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<List<Task>> getTasksDueThisWeek() async {
-    final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    final weekEnd = weekStart.add(const Duration(days: 7));
-    
-    final list = await _getList(_tasksKey);
-    final filtered = list.where((item) {
-      if (item['due_date'] == null) return false;
-      final dueDate = DateTime.fromMillisecondsSinceEpoch(item['due_date'] as int);
-      return dueDate.isAfter(weekStart) && dueDate.isBefore(weekEnd);
-    }).toList();
-    
-    return filtered.map((item) => Task.fromMap(item)).toList();
+  /// Get progress for a date
+  Future<Map<String, dynamic>?> getProgressForDate(final String date) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_progress',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
   }
 
-  Future<List<Task>> getOverdueTasks() async {
-    final now = DateTime.now();
-    final list = await _getList(_tasksKey);
-    final filtered = list.where((item) {
-      if (item['due_date'] == null) return false;
-      final dueDate = DateTime.fromMillisecondsSinceEpoch(item['due_date'] as int);
-      return dueDate.isBefore(now) && !((item['is_completed'] as bool?) ?? false);
-    }).toList();
-    
-    return filtered.map((item) => Task.fromMap(item)).toList();
+  /// Get progress for date range
+  Future<List<Map<String, dynamic>>> getProgressForDateRange(
+    final DateTime startDate,
+    final DateTime endDate,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_progress',
+      where: 'date BETWEEN ? AND ?',
+      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+      orderBy: 'date ASC',
+    );
+    return maps;
   }
 
-  /// Completion operations
-  Future<void> insertCompletion(final HabitCompletion completion) async {
-    await _addToList(_completionsKey, completion.toMap());
+  /// Close database
+  Future<void> close() async {
+    final db = await database;
+    await db.close();
   }
 
-  Future<List<HabitCompletion>> getHabitCompletions(final DateTime day) async {
-    final startOfDay = DateTime(day.year, day.month, day.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-    
-    final list = await _getList(_completionsKey);
-    final filtered = list.where((item) {
-      final completionDate = DateTime.fromMillisecondsSinceEpoch(item['completion_date'] as int);
-      return completionDate.isAfter(startOfDay) && completionDate.isBefore(endOfDay);
-    }).toList();
-    
-    return filtered.map((item) => HabitCompletion.fromMap(item)).toList();
+  // ===== BACKWARD COMPATIBILITY METHODS =====
+
+  /// Initialize database (backward compatibility)
+  Future<void> initialize() async {
+    await database; // Just ensure database is initialized
   }
 
+  /// Insert habit (backward compatibility)
+  Future<void> insertHabit(final Habit habit) async {
+    await saveHabit(habit);
+  }
+
+  /// Insert task (backward compatibility)
+  Future<void> insertTask(final Task task) async {
+    await saveTask(task);
+  }
+
+  /// Update task (backward compatibility)
+  Future<void> updateTask(final Task task) async {
+    final db = await database;
+    await db.update(
+      'tasks',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
+  }
+
+  /// Get task by ID (backward compatibility)
+  Future<Task?> getTaskById(final String id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Task.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  /// Get tasks by habit ID (backward compatibility)
+  Future<List<Task>> getTasksByHabitId(final String habitId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tasks',
+      where: 'habit_id = ?',
+      whereArgs: [habitId],
+    );
+    return List.generate(maps.length, (final i) => Task.fromMap(maps[i]));
+  }
+
+  /// Get completions by habit ID (backward compatibility)
   Future<List<HabitCompletion>> getCompletionsByHabitId(
     final String habitId, {
     final DateTime? startDate,
     final DateTime? endDate,
   }) async {
-    final list = await _getList(_completionsKey);
-    
-    var filtered = list.where((item) => item['habit_id'] == habitId);
-    
+    final db = await database;
+    String whereClause = 'habit_id = ?';
+    final List<Object> whereArgs = [habitId];
+
     if (startDate != null) {
-      filtered = filtered.where((item) {
-        final completionDate = DateTime.fromMillisecondsSinceEpoch(item['completion_date'] as int);
-        return completionDate.isAfter(startDate) || completionDate.isAtSameMomentAs(startDate);
-      });
+      whereClause += ' AND completed_at >= ?';
+      whereArgs.add(startDate.toIso8601String());
     }
-    
+
     if (endDate != null) {
-      filtered = filtered.where((item) {
-        final completionDate = DateTime.fromMillisecondsSinceEpoch(item['completion_date'] as int);
-        return completionDate.isBefore(endDate) || completionDate.isAtSameMomentAs(endDate);
-      });
+      whereClause += ' AND completed_at <= ?';
+      whereArgs.add(endDate.toIso8601String());
     }
-    
-    return filtered.map((item) => HabitCompletion.fromMap(item)).toList();
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      'habit_completions',
+      where: whereClause,
+      whereArgs: whereArgs,
+      orderBy: 'completed_at DESC',
+    );
+    return List.generate(maps.length, (final i) => HabitCompletion.fromMap(maps[i]));
   }
 
-  /// Calendar Event operations
-  Future<void> insertCalendarEvent(final CalendarEvent event) async {
-    await _addToList(_calendarEventsKey, event.toMap());
+  /// Get habit completions for a specific day (backward compatibility)
+  Future<List<HabitCompletion>> getHabitCompletions(final DateTime day) async {
+    final startOfDay = DateTime(day.year, day.month, day.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return getCompletionsForDateRange(startOfDay, endOfDay);
   }
 
-  Future<List<CalendarEvent>> getCalendarEvents() async {
-    final list = await _getList(_calendarEventsKey);
-    return list.map((item) => CalendarEvent.fromMap(item)).toList();
+  // ===== CALENDAR EVENTS (backward compatibility) =====
+
+  /// Get all calendar events (backward compatibility)
+  Future<List<Map<String, dynamic>>> getCalendarEvents() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('calendar_events');
+    return maps;
   }
 
-  Future<List<CalendarEvent>> getCalendarEventsForDateRange({
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
-    final list = await _getList(_calendarEventsKey);
-    final filtered = list.where((item) {
-      final eventStart = DateTime.fromMillisecondsSinceEpoch(item['start_time']);
-      return eventStart.isAfter(startDate) && eventStart.isBefore(endDate);
-    }).toList();
-    
-    return filtered.map((item) => CalendarEvent.fromMap(item)).toList();
+  /// Insert calendar event (backward compatibility)
+  Future<void> insertCalendarEvent(final Map<String, dynamic> event) async {
+    final db = await database;
+    await db.insert(
+      'calendar_events',
+      event,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<CalendarEvent?> getCalendarEventById(String id) async {
-    final list = await _getList(_calendarEventsKey);
-    try {
-      final eventMap = list.firstWhere((item) => item['id'] == id);
-      return CalendarEvent.fromMap(eventMap);
-    } catch (e) {
-      return null;
-    }
+  /// Update calendar event (backward compatibility)
+  Future<void> updateCalendarEvent(final Map<String, dynamic> event) async {
+    final db = await database;
+    await db.update(
+      'calendar_events',
+      event,
+      where: 'id = ?',
+      whereArgs: [event['id']],
+    );
   }
 
-  Future<void> updateCalendarEvent(CalendarEvent event) async {
-    await _updateInList(_calendarEventsKey, event.id, event.toMap());
-  }
-
-  Future<void> deleteCalendarEvent(String id) async {
-    await _removeFromList(_calendarEventsKey, id);
-  }
-
-  Future<List<CalendarEvent>> getCalendarEventsByCategory(
-    EventCategory category,
-  ) async {
-    final list = await _getList(_calendarEventsKey);
-    final filtered = list.where((item) => item['category'] == category.name).toList();
-    return filtered.map((item) => CalendarEvent.fromMap(item)).toList();
-  }
-
-  /// Progress operations
-  Future<void> insertProgress(Map<String, dynamic> progress) async {
-    // For now, just store as metadata
-    final prefs = await _preferences;
-    final progressKey = 'progress_${progress['habit_id']}_${progress['date']}';
-    await prefs.setString(progressKey, jsonEncode(progress));
-  }
-
-  Future<Map<String, dynamic>?> getProgressByHabitIdAndDate(
-    String habitId,
-    String date,
-  ) async {
-    final prefs = await _preferences;
-    final progressKey = 'progress_${habitId}_$date';
-    final jsonString = prefs.getString(progressKey);
-    if (jsonString == null) return null;
-    return Map<String, dynamic>.from(jsonDecode(jsonString));
-  }
-
-  Future<List<Map<String, dynamic>>> getProgressByHabitId(
-    String habitId, {
-    int limit = 30,
-  }) async {
-    final prefs = await _preferences;
-    final keys = prefs.getKeys().where((key) => key.startsWith('progress_$habitId'));
-    final progressList = <Map<String, dynamic>>[];
-    
-    for (final key in keys) {
-      final jsonString = prefs.getString(key);
-      if (jsonString != null) {
-        progressList.add(Map<String, dynamic>.from(jsonDecode(jsonString)));
-      }
-    }
-    
-    // Sort by date and limit
-    progressList.sort((a, b) => b['date'].compareTo(a['date']));
-    return progressList.take(limit).toList();
-  }
-
-  Future<void> updateProgress(Map<String, dynamic> progress) async {
-    await insertProgress(progress); // Same as insert for SharedPreferences
-  }
-
-  /// Analytics queries
-  Future<Map<String, dynamic>> getHabitStats(String habitId) async {
-    final completions = await getCompletionsByHabitId(habitId);
-    final totalCompletions = completions.length;
-    
-    // Calculate current streak
-    var currentStreak = 0;
-    final now = DateTime.now();
-    for (var i = 0; i < 365; i++) {
-      final checkDate = now.subtract(Duration(days: i));
-      final hasCompletion = completions.any((completion) {
-        final completionDate = DateTime(
-          completion.date.year,
-          completion.date.month,
-          completion.date.day,
-        );
-        final checkDateOnly = DateTime(
-          checkDate.year,
-          checkDate.month,
-          checkDate.day,
-        );
-        return completionDate.isAtSameMomentAs(checkDateOnly);
-      });
-      
-      if (hasCompletion) {
-        currentStreak++;
-      } else {
-        break;
-      }
-    }
-    
-    return {
-      'totalCompletions': totalCompletions,
-      'currentStreak': currentStreak,
-      'recentCompletions': completions.where((c) => 
-        c.completedAt.isAfter(now.subtract(const Duration(days: 7)))
-      ).length,
-      'completionRate': totalCompletions > 0 ? 1.0 : 0.0,
-    };
-  }
-
-  /// Database maintenance
-  Future<void> clearOldData() async {
-    // Clear data older than 1 year
-    final oneYearAgo = DateTime.now().subtract(const Duration(days: 365));
-    
-    // Clear old completions
-    final completions = await _getList(_completionsKey);
-    final recentCompletions = completions.where((item) {
-      final completionDate = DateTime.fromMillisecondsSinceEpoch(item['completion_date'] as int);
-      return completionDate.isAfter(oneYearAgo);
-    }).toList();
-    await _saveList(_completionsKey, recentCompletions);
-  }
-
-  /// Export data for backup
-  Future<Map<String, dynamic>> exportData() async {
-    return {
-      'habits': await _getList(_habitsKey),
-      'tasks': await _getList(_tasksKey),
-      'completions': await _getList(_completionsKey),
-      'calendar_events': await _getList(_calendarEventsKey),
-      'exportedAt': DateTime.now().toIso8601String(),
-    };
-  }
-
-  /// Import data from backup
-  Future<void> importData(Map<String, dynamic> data) async {
-    if (data['habits'] != null) {
-      await _saveList(_habitsKey, List<Map<String, dynamic>>.from(data['habits']));
-    }
-    if (data['tasks'] != null) {
-      await _saveList(_tasksKey, List<Map<String, dynamic>>.from(data['tasks']));
-    }
-    if (data['completions'] != null) {
-      await _saveList(_completionsKey, List<Map<String, dynamic>>.from(data['completions']));
-    }
-    if (data['calendar_events'] != null) {
-      await _saveList(_calendarEventsKey, List<Map<String, dynamic>>.from(data['calendar_events']));
-    }
-  }
-
-  /// Close database
-  Future<void> close() async {
-    // Nothing to close for SharedPreferences
+  /// Delete calendar event (backward compatibility)
+  Future<void> deleteCalendarEvent(final String id) async {
+    final db = await database;
+    await db.delete('calendar_events', where: 'id = ?', whereArgs: [id]);
   }
 }

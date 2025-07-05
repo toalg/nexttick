@@ -1,9 +1,11 @@
-import '../models/task.dart';
-import '../models/habit.dart';
-import 'database_service.dart';
+import 'package:nexttick/shared/models/habit.dart';
+import 'package:nexttick/shared/models/task.dart';
+import 'package:nexttick/shared/services/database_service.dart';
 
 /// Service for managing tasks with calendar integration
 class TaskService {
+
+  TaskService._();
   static TaskService? _instance;
   final DatabaseService _database = DatabaseService.instance;
 
@@ -12,8 +14,6 @@ class TaskService {
     _instance ??= TaskService._();
     return _instance!;
   }
-
-  TaskService._();
 
   /// Create a new task
   Future<Task> createTask({
@@ -70,32 +70,30 @@ class TaskService {
   }
 
   /// Get all tasks
-  Future<List<Task>> getAllTasks() async {
-    return _database.getAllTasks();
-  }
+  Future<List<Task>> getAllTasks() async => _database.getAllTasks();
 
   /// Get tasks due today
   Future<List<Task>> getTasksDueToday() async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) => task.isDueToday).toList();
+    return tasks.where((final task) => task.isDueToday).toList();
   }
 
   /// Get tasks due this week
   Future<List<Task>> getTasksDueThisWeek() async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) => task.isDueThisWeek).toList();
+    return tasks.where((final task) => task.isDueThisWeek).toList();
   }
 
   /// Get overdue tasks
   Future<List<Task>> getOverdueTasks() async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) => task.isOverdue).toList();
+    return tasks.where((final task) => task.isOverdue).toList();
   }
 
   /// Get tasks for a specific date
   Future<List<Task>> getTasksForDate(final DateTime date) async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) {
+    return tasks.where((final task) {
       if (task.dueDate == null) return false;
       final dueDate = DateTime(
         task.dueDate!.year,
@@ -110,19 +108,17 @@ class TaskService {
   /// Get tasks by priority
   Future<List<Task>> getTasksByPriority(final TaskPriority priority) async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) => task.priority == priority).toList();
+    return tasks.where((final task) => task.priority == priority).toList();
   }
 
   /// Get tasks by status
   Future<List<Task>> getTasksByStatus(final TaskStatus status) async {
     final tasks = await _database.getAllTasks();
-    return tasks.where((task) => task.status == status).toList();
+    return tasks.where((final task) => task.status == status).toList();
   }
 
   /// Get tasks by habit
-  Future<List<Task>> getTasksByHabit(final String habitId) async {
-    return _database.getTasksByHabitId(habitId);
-  }
+  Future<List<Task>> getTasksByHabit(final String habitId) async => _database.getTasksByHabitId(habitId);
 
   /// Update task
   Future<Task> updateTask(final Task task) async {
@@ -174,7 +170,7 @@ class TaskService {
     final now = DateTime.now();
     final weekFromNow = now.add(const Duration(days: 7));
 
-    return tasks.where((task) {
+    return tasks.where((final task) {
       if (task.dueDate == null) return false;
       return task.dueDate!.isAfter(now) && task.dueDate!.isBefore(weekFromNow);
     }).toList();
@@ -219,7 +215,7 @@ class TaskService {
           // Check if task already exists for this date
           final existingTasks = await getTasksForDate(date);
           final habitTaskExists = existingTasks.any(
-            (task) => task.habitId == habit.id,
+            (final task) => task.habitId == habit.id,
           );
 
           if (!habitTaskExists) {
@@ -242,15 +238,15 @@ class TaskService {
     final now = DateTime.now();
 
     final completed = tasks.where(
-      (task) => task.status == TaskStatus.completed,
+      (final task) => task.status == TaskStatus.completed,
     ).length;
     final pending = tasks.where(
-      (task) => task.status == TaskStatus.pending,
+      (final task) => task.status == TaskStatus.pending,
     ).length;
     final inProgress = tasks.where(
-      (task) => task.status == TaskStatus.inProgress,
+      (final task) => task.status == TaskStatus.inProgress,
     ).length;
-    final overdue = tasks.where((task) => task.isOverdue).length;
+    final overdue = tasks.where((final task) => task.isOverdue).length;
 
     return {
       'totalTasks': tasks.length,

@@ -33,11 +33,9 @@ class AppTheme {
     onError: Color(0xFFFFFFFF),
     errorContainer: Color(0xFFFEF2F2),
     onErrorContainer: Color(0xFF7F1D1D),
-    background: Color(0xFFFAFAFA), // Clean, light background
-    onBackground: Color(0xFF0F172A),
     surface: Color(0xFFFFFFFF), // Pure white surface
     onSurface: Color(0xFF0F172A),
-    surfaceVariant: Color(0xFFF8FAFC), // Subtle surface variation
+    surfaceContainerHighest: Color(0xFFF8FAFC), // Subtle surface variation
     onSurfaceVariant: Color(0xFF475569),
     outline: Color(0xFFE2E8F0), // Soft outline
     outlineVariant: Color(0xFFF1F5F9),
@@ -68,11 +66,9 @@ class AppTheme {
     onError: Color(0xFF7F1D1D),
     errorContainer: Color(0xFF991B1B),
     onErrorContainer: Color(0xFFFEF2F2),
-    background: Color(0xFF0F172A), // Deep, sophisticated dark
-    onBackground: Color(0xFFF8FAFC),
     surface: Color(0xFF1E293B), // Rich dark surface
     onSurface: Color(0xFFF8FAFC),
-    surfaceVariant: Color(0xFF334155), // Subtle dark variation
+    surfaceContainerHighest: Color(0xFF334155), // Subtle dark variation
     onSurfaceVariant: Color(0xFFCBD5E1),
     outline: Color(0xFF475569), // Soft dark outline
     outlineVariant: Color(0xFF334155),
@@ -85,8 +81,7 @@ class AppTheme {
   );
 
   /// Light theme configuration with premium polish
-  static ThemeData get lightTheme {
-    return ThemeData(
+  static ThemeData get lightTheme => ThemeData(
       useMaterial3: true,
       colorScheme: _lightColorScheme,
       textTheme: _buildPremiumTextTheme(_lightColorScheme),
@@ -107,11 +102,9 @@ class AppTheme {
       iconTheme: _buildPremiumIconTheme(_lightColorScheme),
       dividerTheme: _buildPremiumDividerTheme(_lightColorScheme),
     );
-  }
 
   /// Dark theme configuration with premium polish
-  static ThemeData get darkTheme {
-    return ThemeData(
+  static ThemeData get darkTheme => ThemeData(
       useMaterial3: true,
       colorScheme: _darkColorScheme,
       textTheme: _buildPremiumTextTheme(_darkColorScheme),
@@ -130,11 +123,9 @@ class AppTheme {
       iconTheme: _buildPremiumIconTheme(_darkColorScheme),
       dividerTheme: _buildPremiumDividerTheme(_darkColorScheme),
     );
-  }
 
   /// Premium text theme with sophisticated typography
-  static TextTheme _buildPremiumTextTheme(ColorScheme colorScheme) {
-    return TextTheme(
+  static TextTheme _buildPremiumTextTheme(final ColorScheme colorScheme) => TextTheme(
       // Display styles - large, impactful headlines
       displayLarge: TextStyle(
         fontSize: 57,
@@ -257,11 +248,9 @@ class AppTheme {
         color: colorScheme.onSurfaceVariant,
       ),
     );
-  }
 
   /// Premium AppBar theme with subtle elevation
-  static AppBarTheme _buildPremiumAppBarTheme(ColorScheme colorScheme) {
-    return AppBarTheme(
+  static AppBarTheme _buildPremiumAppBarTheme(final ColorScheme colorScheme) => AppBarTheme(
       backgroundColor: colorScheme.surface,
       foregroundColor: colorScheme.onSurface,
       elevation: 0,
@@ -274,24 +263,20 @@ class AppTheme {
         color: colorScheme.onSurface,
       ),
     );
-  }
 
   /// Premium Card theme with sophisticated elevation
-  static CardThemeData _buildPremiumCardTheme(ColorScheme colorScheme) {
-    return CardThemeData(
+  static CardThemeData _buildPremiumCardTheme(final ColorScheme colorScheme) => CardThemeData(
       color: colorScheme.surface,
       elevation: 2,
       shadowColor: colorScheme.shadow.withOpacity(0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
-  }
 
   /// Premium ElevatedButton theme with vibrant colors
   static ElevatedButtonThemeData _buildPremiumElevatedButtonTheme(
-    ColorScheme colorScheme,
-  ) {
-    return ElevatedButtonThemeData(
+    final ColorScheme colorScheme,
+  ) => ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
@@ -307,27 +292,23 @@ class AppTheme {
         animationDuration: const Duration(milliseconds: 200),
       ),
     );
-  }
 
   /// Premium FloatingActionButton theme
   static FloatingActionButtonThemeData _buildPremiumFloatingActionButtonTheme(
-    ColorScheme colorScheme,
-  ) {
-    return FloatingActionButtonThemeData(
+    final ColorScheme colorScheme,
+  ) => FloatingActionButtonThemeData(
       backgroundColor: colorScheme.primary,
       foregroundColor: colorScheme.onPrimary,
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
-  }
 
   /// Premium InputDecoration theme
   static InputDecorationTheme _buildPremiumInputDecorationTheme(
-    ColorScheme colorScheme,
-  ) {
-    return InputDecorationTheme(
+    final ColorScheme colorScheme,
+  ) => InputDecorationTheme(
       filled: true,
-      fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+      fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: colorScheme.outline),
@@ -360,14 +341,12 @@ class AppTheme {
         color: colorScheme.onSurfaceVariant.withOpacity(0.7),
       ),
     );
-  }
 
   /// Premium Chip theme with vibrant colors
-  static ChipThemeData _buildPremiumChipTheme(ColorScheme colorScheme) {
-    return ChipThemeData(
-      backgroundColor: colorScheme.surfaceVariant.withOpacity(0.8),
+  static ChipThemeData _buildPremiumChipTheme(final ColorScheme colorScheme) => ChipThemeData(
+      backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.8),
       selectedColor: colorScheme.primaryContainer,
-      disabledColor: colorScheme.surfaceVariant.withOpacity(0.3),
+      disabledColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
       labelStyle: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
@@ -378,13 +357,11 @@ class AppTheme {
       elevation: 1,
       shadowColor: colorScheme.shadow.withOpacity(0.1),
     );
-  }
 
   /// Premium BottomNavigationBar theme
   static BottomNavigationBarThemeData _buildPremiumBottomNavigationBarTheme(
-    ColorScheme colorScheme,
-  ) {
-    return BottomNavigationBarThemeData(
+    final ColorScheme colorScheme,
+  ) => BottomNavigationBarThemeData(
       backgroundColor: colorScheme.surface,
       selectedItemColor: colorScheme.primary,
       unselectedItemColor: colorScheme.onSurfaceVariant,
@@ -399,17 +376,15 @@ class AppTheme {
         fontWeight: FontWeight.w400,
       ),
     );
-  }
 
   /// Premium NavigationBar theme (Material 3)
   static NavigationBarThemeData _buildPremiumNavigationBarTheme(
-    ColorScheme colorScheme,
-  ) {
-    return NavigationBarThemeData(
+    final ColorScheme colorScheme,
+  ) => NavigationBarThemeData(
       backgroundColor: colorScheme.surface,
       indicatorColor: colorScheme.primaryContainer,
-      labelTextStyle: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      labelTextStyle: WidgetStateProperty.resolveWith((final states) {
+        if (states.contains(WidgetState.selected)) {
           return TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -422,31 +397,26 @@ class AppTheme {
           color: colorScheme.onSurfaceVariant,
         );
       }),
-      iconTheme: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      iconTheme: WidgetStateProperty.resolveWith((final states) {
+        if (states.contains(WidgetState.selected)) {
           return IconThemeData(color: colorScheme.onPrimaryContainer, size: 24);
         }
         return IconThemeData(color: colorScheme.onSurfaceVariant, size: 24);
       }),
     );
-  }
 
   /// Premium Icon theme
-  static IconThemeData _buildPremiumIconTheme(ColorScheme colorScheme) {
-    return IconThemeData(color: colorScheme.onSurfaceVariant, size: 24);
-  }
+  static IconThemeData _buildPremiumIconTheme(final ColorScheme colorScheme) => IconThemeData(color: colorScheme.onSurfaceVariant, size: 24);
 
   /// Premium Divider theme
-  static DividerThemeData _buildPremiumDividerTheme(ColorScheme colorScheme) {
-    return DividerThemeData(
+  static DividerThemeData _buildPremiumDividerTheme(final ColorScheme colorScheme) => DividerThemeData(
       color: colorScheme.outline.withOpacity(0.2),
       thickness: 1,
       space: 1,
     );
-  }
 
   /// Get theme mode from system preference
-  static ThemeMode getThemeMode(String? themePreference) {
+  static ThemeMode getThemeMode(final String? themePreference) {
     switch (themePreference) {
       case 'light':
         return ThemeMode.light;
@@ -458,14 +428,10 @@ class AppTheme {
   }
 
   /// Check if current theme is dark
-  static bool isDarkTheme(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark;
-  }
+  static bool isDarkTheme(final BuildContext context) => Theme.of(context).brightness == Brightness.dark;
 
   /// Get color scheme from context
-  static ColorScheme getColorScheme(BuildContext context) {
-    return Theme.of(context).colorScheme;
-  }
+  static ColorScheme getColorScheme(final BuildContext context) => Theme.of(context).colorScheme;
 
   /// Get vibrant accent colors for habit categories
   static List<Color> get habitCategoryColors => [

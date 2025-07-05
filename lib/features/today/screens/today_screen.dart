@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/habit.dart';
-import '../../../shared/services/database_service.dart';
-import '../../../shared/widgets/multi_action_fab.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
+import 'package:nexttick/shared/models/habit.dart';
+import 'package:nexttick/shared/services/database_service.dart';
+import 'package:nexttick/shared/widgets/multi_action_fab.dart';
 
 /// Today screen showing today's habits and completion status
 class TodayScreen extends StatefulWidget {
@@ -30,7 +30,7 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
 
     return Scaffold(
@@ -43,7 +43,7 @@ class _TodayScreenState extends State<TodayScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -65,7 +65,7 @@ class _TodayScreenState extends State<TodayScreen> {
               const SizedBox(height: 32),
 
               // Progress summary with gradient
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(16),
@@ -78,7 +78,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -144,7 +144,7 @@ class _TodayScreenState extends State<TodayScreen> {
               Expanded(
                 child: FutureBuilder<List<Habit>>(
                   future: _habitsFuture,
-                  builder: (context, snapshot) {
+                  builder: (final context, final snapshot) {
                     final habits = snapshot.data ?? [];
                     final hasHabits = habits.isNotEmpty;
                     return Center(
@@ -197,7 +197,7 @@ class _TodayScreenState extends State<TodayScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 32),
-                          Container(
+                          DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: AppTheme.successGradient,
                               borderRadius: BorderRadius.circular(12),
@@ -253,13 +253,12 @@ class _TodayScreenState extends State<TodayScreen> {
 
   /// Build a progress item widget
   Widget _buildProgressItem(
-    BuildContext context,
-    String value,
-    String label,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
+    final BuildContext context,
+    final String value,
+    final String label,
+    final IconData icon,
+    final Color color,
+  ) => Column(
       children: [
         Icon(icon, color: color, size: 32),
         const SizedBox(height: 8),
@@ -278,7 +277,6 @@ class _TodayScreenState extends State<TodayScreen> {
         ),
       ],
     );
-  }
 
   /// Get today's header text
   String _getTodayHeader() {
@@ -291,7 +289,7 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   /// Get weekday name
-  String _getWeekdayName(int weekday) {
+  String _getWeekdayName(final int weekday) {
     const weekdays = [
       'Monday',
       'Tuesday',
@@ -305,7 +303,7 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   /// Get month name
-  String _getMonthName(int month) {
+  String _getMonthName(final int month) {
     const months = [
       'January',
       'February',

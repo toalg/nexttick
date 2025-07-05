@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:nexttick/shared/models/calendar_event.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import '../../../shared/models/calendar_event.dart';
 
 /// Dialog for creating and editing calendar events
 class EventEditorDialog extends StatefulWidget {
@@ -87,7 +87,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Dialog(
@@ -136,7 +136,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildHeader(final BuildContext context, final ColorScheme colorScheme) {
     final isEdit = widget.appointment != null;
     
     return Row(
@@ -187,25 +187,22 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
     );
   }
 
-  Widget _buildTitleField() {
-    return TextFormField(
+  Widget _buildTitleField() => TextFormField(
       controller: _titleController,
       decoration: const InputDecoration(
         labelText: 'Event Title',
         hintText: 'Enter event title',
         prefixIcon: Icon(Icons.title),
       ),
-      validator: (value) {
+      validator: (final value) {
         if (value == null || value.trim().isEmpty) {
           return 'Please enter an event title';
         }
         return null;
       },
     );
-  }
 
-  Widget _buildDescriptionField() {
-    return TextFormField(
+  Widget _buildDescriptionField() => TextFormField(
       controller: _descriptionController,
       decoration: const InputDecoration(
         labelText: 'Description',
@@ -214,10 +211,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
       ),
       maxLines: 2,
     );
-  }
 
-  Widget _buildDateTimeSection(BuildContext context) {
-    return Column(
+  Widget _buildDateTimeSection(final BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -231,10 +226,10 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
             const Spacer(),
             Row(
               children: [
-                Text('All Day'),
+                const Text('All Day'),
                 Switch(
                   value: _isAllDay,
-                  onChanged: (value) {
+                  onChanged: (final value) {
                     setState(() {
                       _isAllDay = value;
                     });
@@ -251,7 +246,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
               child: _buildDatePicker(
                 'Start Date',
                 _startDate,
-                (date) => setState(() => _startDate = date),
+                (final date) => setState(() => _startDate = date),
               ),
             ),
             if (!_isAllDay) ...[
@@ -261,7 +256,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
                   context,
                   'Start Time',
                   _startTime,
-                  (time) => setState(() => _startTime = time),
+                  (final time) => setState(() => _startTime = time),
                 ),
               ),
             ],
@@ -274,7 +269,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
               child: _buildDatePicker(
                 'End Date',
                 _endDate,
-                (date) => setState(() => _endDate = date),
+                (final date) => setState(() => _endDate = date),
               ),
             ),
             if (!_isAllDay) ...[
@@ -284,7 +279,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
                   context,
                   'End Time',
                   _endTime,
-                  (time) => setState(() => _endTime = time),
+                  (final time) => setState(() => _endTime = time),
                 ),
               ),
             ],
@@ -292,14 +287,12 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         ),
       ],
     );
-  }
 
   Widget _buildDatePicker(
-    String label,
-    DateTime date,
-    ValueChanged<DateTime> onChanged,
-  ) {
-    return InkWell(
+    final String label,
+    final DateTime date,
+    final ValueChanged<DateTime> onChanged,
+  ) => InkWell(
       onTap: () async {
         final selectedDate = await showDatePicker(
           context: context,
@@ -321,15 +314,13 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         ),
       ),
     );
-  }
 
   Widget _buildTimePicker(
-    BuildContext context,
-    String label,
-    TimeOfDay time,
-    ValueChanged<TimeOfDay> onChanged,
-  ) {
-    return InkWell(
+    final BuildContext context,
+    final String label,
+    final TimeOfDay time,
+    final ValueChanged<TimeOfDay> onChanged,
+  ) => InkWell(
       onTap: () async {
         final selectedTime = await showTimePicker(
           context: context,
@@ -347,10 +338,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         child: Text(time.format(context)),
       ),
     );
-  }
 
-  Widget _buildCategoryPrioritySection() {
-    return Row(
+  Widget _buildCategoryPrioritySection() => Row(
       children: [
         Expanded(
           child: DropdownButtonFormField<EventCategory>(
@@ -359,8 +348,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
               labelText: 'Category',
               prefixIcon: Icon(Icons.category),
             ),
-            items: EventCategory.values.map((category) {
-              return DropdownMenuItem(
+            items: EventCategory.values.map((final category) => DropdownMenuItem(
                 value: category,
                 child: Row(
                   children: [
@@ -372,9 +360,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
                     Text(category.name.toUpperCase()),
                   ],
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
+              )).toList(),
+            onChanged: (final value) {
               if (value != null) {
                 setState(() {
                   _category = value;
@@ -392,13 +379,11 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
               labelText: 'Priority',
               prefixIcon: Icon(Icons.flag),
             ),
-            items: EventPriority.values.map((priority) {
-              return DropdownMenuItem(
+            items: EventPriority.values.map((final priority) => DropdownMenuItem(
                 value: priority,
                 child: Text(priority.name.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: (value) {
+              )).toList(),
+            onChanged: (final value) {
               if (value != null) {
                 setState(() {
                   _priority = value;
@@ -409,10 +394,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         ),
       ],
     );
-  }
 
-  Widget _buildLocationField() {
-    return TextFormField(
+  Widget _buildLocationField() => TextFormField(
       controller: _locationController,
       decoration: const InputDecoration(
         labelText: 'Location',
@@ -420,10 +403,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         prefixIcon: Icon(Icons.location_on),
       ),
     );
-  }
 
-  Widget _buildNotesField() {
-    return TextFormField(
+  Widget _buildNotesField() => TextFormField(
       controller: _notesController,
       decoration: const InputDecoration(
         labelText: 'Notes',
@@ -432,9 +413,8 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
       ),
       maxLines: 3,
     );
-  }
 
-  Widget _buildColorPicker(ColorScheme colorScheme) {
+  Widget _buildColorPicker(final ColorScheme colorScheme) {
     final colors = [
       colorScheme.primary,
       Colors.red,
@@ -462,7 +442,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
-          children: colors.map((color) {
+          children: colors.map((final color) {
             final isSelected = _selectedColor == color;
             return GestureDetector(
               onTap: () {
@@ -491,8 +471,7 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ColorScheme colorScheme) {
-    return Row(
+  Widget _buildActionButtons(final BuildContext context, final ColorScheme colorScheme) => Row(
       children: [
         Expanded(
           child: OutlinedButton(
@@ -513,7 +492,6 @@ class _EventEditorDialogState extends State<EventEditorDialog> {
         ),
       ],
     );
-  }
 
   void _saveEvent() {
     if (_formKey.currentState!.validate()) {

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/multi_action_fab.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
+import 'package:nexttick/shared/widgets/multi_action_fab.dart';
 
 /// Habits screen for managing habit list and creation
 class HabitsScreen extends StatelessWidget {
   const HabitsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
 
     return Scaffold(
@@ -28,7 +28,7 @@ class HabitsScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -79,7 +79,7 @@ class HabitsScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Premium features teaser with gradient
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: AppTheme.energeticGradient,
                   borderRadius: BorderRadius.circular(16),
@@ -92,7 +92,7 @@ class HabitsScreen extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -133,7 +133,7 @@ class HabitsScreen extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Container(
+                            child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -214,7 +214,7 @@ class HabitsScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
-                      Container(
+                      DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: AppTheme.primaryGradient,
                           borderRadius: BorderRadius.circular(12),

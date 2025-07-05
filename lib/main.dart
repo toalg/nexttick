@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_core/theme.dart';
-
 import 'package:nexttick/core/theme/app_theme.dart';
 import 'package:nexttick/shared/services/calendar_service.dart';
 import 'package:nexttick/shared/services/database_service.dart';
@@ -30,7 +28,6 @@ class NextTickApp extends StatelessWidget {
     title: 'NextTick',
     theme: AppTheme.lightTheme,
     darkTheme: AppTheme.darkTheme,
-    themeMode: ThemeMode.system,
     home: const MainNavigation(),
   );
 }

@@ -9,7 +9,7 @@ class EventDataSource extends CalendarDataSource {
   EventDataSource(final List<CalendarEvent> events, [final List<Task> tasks = const []]) {
     appointments = [
       ...events.map((final event) => event.toAppointment()),
-      ...tasks.map((final task) => _taskToAppointment(task)),
+      ...tasks.map(_taskToAppointment),
     ];
   }
 
@@ -18,7 +18,7 @@ class EventDataSource extends CalendarDataSource {
     appointments!.clear();
     appointments!.addAll([
       ...events.map((final event) => event.toAppointment()),
-      ...tasks.map((final task) => _taskToAppointment(task)),
+      ...tasks.map(_taskToAppointment),
     ]);
     notifyListeners(CalendarDataSourceAction.reset, appointments!);
   }
@@ -96,7 +96,6 @@ class EventDataSource extends CalendarDataSource {
         task.dueDate!.month,
         task.dueDate!.day,
         9,
-        0,
       );
       endTime = startTime.add(const Duration(minutes: 30));
       isAllDay = false;

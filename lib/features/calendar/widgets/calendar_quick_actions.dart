@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/calendar_event.dart';
-import '../../../shared/models/habit.dart';
-import '../../../shared/models/task.dart';
-import '../../../shared/services/calendar_service.dart';
-import '../../../shared/services/task_service.dart';
-import '../../../shared/services/database_service.dart';
+import 'package:nexttick/core/theme/app_theme.dart';
+import 'package:nexttick/shared/models/calendar_event.dart';
+import 'package:nexttick/shared/models/habit.dart';
+import 'package:nexttick/shared/services/calendar_service.dart';
+import 'package:nexttick/shared/services/database_service.dart';
+import 'package:nexttick/shared/services/task_service.dart';
 
 /// Quick action buttons for calendar operations
 class CalendarQuickActions extends StatelessWidget {
@@ -19,7 +18,7 @@ class CalendarQuickActions extends StatelessWidget {
   final VoidCallback? onActionCompleted;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(final BuildContext context) {
     final colorScheme = AppTheme.getColorScheme(context);
     final date = selectedDate ?? DateTime.now();
 
@@ -147,118 +146,123 @@ class CalendarQuickActions extends StatelessWidget {
   }
 
   Widget _buildQuickActionTile(
-    BuildContext context,
-    ColorScheme colorScheme,
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const Spacer(),
-                Icon(Icons.arrow_forward_ios, color: color, size: 12),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+    final BuildContext context,
+    final ColorScheme colorScheme,
+    final String title,
+    final String subtitle,
+    final IconData icon,
+    final Color color,
+    final VoidCallback onTap,
+  ) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-    );
-  }
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const Spacer(),
+              Icon(Icons.arrow_forward_ios, color: color, size: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    ),
+  );
 
-  void _createEvent(BuildContext context, DateTime date) {
-    // Create a simple event for the selected date
+  /// Create a new calendar event
+  Future<void> _createEvent(
+    final BuildContext context,
+    final DateTime date,
+  ) async {
     final event = CalendarEvent.create(
       title: 'New Event',
-      startTime: DateTime(date.year, date.month, date.day, 9, 0),
-      endTime: DateTime(date.year, date.month, date.day, 10, 0),
-      description: 'Event created from quick actions',
-      category: EventCategory.personal,
+      startTime: date,
+      endTime: date.add(const Duration(hours: 1)),
     );
-
-    CalendarService.instance
-        .createEvent(
-          title: event.title,
-          startTime: event.startTime,
-          endTime: event.endTime,
-          description: event.description,
-          category: event.category,
-        )
-        .then((_) {
-          Navigator.of(context).pop();
-          onActionCompleted?.call();
-          _showSuccessSnackBar(context, 'Event created successfully');
-        });
+    await CalendarService.instance.addEvent(event);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Event created!')));
+    }
   }
 
-  void _createTask(BuildContext context, DateTime date) {
-    // Create a task with the selected date as due date
-    TaskService.instance
-        .createTask(
-          title: 'New Task',
-          description: 'Task created from calendar',
-          dueDate: date,
-          priority: TaskPriority.medium,
-        )
-        .then((_) {
-          Navigator.of(context).pop();
-          onActionCompleted?.call();
-          _showSuccessSnackBar(context, 'Task created successfully');
-        });
+  /// Create a new task
+  Future<void> _createTask(
+    final BuildContext context,
+    final DateTime date,
+  ) async {
+    await TaskService.instance.createTask(title: 'New Task', dueDate: date);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Task created!')));
+    }
   }
 
-  void _scheduleHabit(BuildContext context, DateTime date) {
+  /// Create a new habit
+  Future<void> _createHabit(
+    final BuildContext context,
+    final DateTime date,
+  ) async {
+    final habit = Habit.create(
+      title: 'New Habit',
+      description: 'Habit created from calendar',
+      recurrence: 'daily',
+    );
+    await DatabaseService.instance.insertHabit(habit);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Habit created!')));
+    }
+  }
+
+  void _scheduleHabit(final BuildContext context, final DateTime date) {
     // Show habit selection dialog
     _showHabitSelectionDialog(context, date);
   }
 
-  void _createQuickNote(BuildContext context, DateTime date) {
+  void _createQuickNote(final BuildContext context, final DateTime date) {
     // Create a quick note as an all-day event
     final event = CalendarEvent.create(
       title: 'Quick Note',
       startTime: date,
       endTime: date,
       description: 'Quick note created from calendar',
-      category: EventCategory.other,
       isAllDay: true,
     );
 
@@ -278,11 +282,11 @@ class CalendarQuickActions extends StatelessWidget {
         });
   }
 
-  void _scheduleFromTemplate(BuildContext context, DateTime date) {
+  void _scheduleFromTemplate(final BuildContext context, final DateTime date) {
     // Show template selection dialog
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Schedule from Template'),
         content: const Text(
           'Template functionality will be available soon. '
@@ -298,11 +302,11 @@ class CalendarQuickActions extends StatelessWidget {
     );
   }
 
-  void _bulkSchedule(BuildContext context, DateTime date) {
+  void _bulkSchedule(final BuildContext context, final DateTime date) {
     // Show bulk schedule dialog
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (final context) => AlertDialog(
         title: const Text('Bulk Schedule'),
         content: const Text(
           'Bulk scheduling will allow you to create multiple events '
@@ -318,12 +322,15 @@ class CalendarQuickActions extends StatelessWidget {
     );
   }
 
-  void _showHabitSelectionDialog(BuildContext context, DateTime date) {
+  void _showHabitSelectionDialog(
+    final BuildContext context,
+    final DateTime date,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => FutureBuilder<List<Habit>>(
+      builder: (final context) => FutureBuilder<List<Habit>>(
         future: DatabaseService.instance.getAllHabits(),
-        builder: (context, snapshot) {
+        builder: (final context, final snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const AlertDialog(
               title: Text('Loading Habits'),
@@ -356,20 +363,17 @@ class CalendarQuickActions extends StatelessWidget {
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: habits.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (final context, final index) {
                   final habit = habits[index];
                   return ListTile(
                     leading: Icon(
                       Icons.loop,
                       color: habit.color != null
                           ? (habit.color is int
-                                ? Color(habit.color as int)
+                                ? Color(habit.color! as int)
                                 : (habit.color is String
                                       ? Color(
-                                          int.parse(
-                                            habit.color as String,
-                                            radix: 16,
-                                          ),
+                                          int.parse(habit.color!, radix: 16),
                                         )
                                       : Theme.of(context).colorScheme.primary))
                           : Theme.of(context).colorScheme.primary,
@@ -396,7 +400,11 @@ class CalendarQuickActions extends StatelessWidget {
     );
   }
 
-  void _scheduleHabitForDate(BuildContext context, Habit habit, DateTime date) {
+  void _scheduleHabitForDate(
+    final BuildContext context,
+    final Habit habit,
+    final DateTime date,
+  ) {
     CalendarService.instance
         .createEventFromHabit(habit: habit, date: date)
         .then((_) {
@@ -406,7 +414,7 @@ class CalendarQuickActions extends StatelessWidget {
         });
   }
 
-  void _showSuccessSnackBar(BuildContext context, String message) {
+  void _showSuccessSnackBar(final BuildContext context, final String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -417,7 +425,7 @@ class CalendarQuickActions extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(final DateTime date) {
     const months = [
       'Jan',
       'Feb',
